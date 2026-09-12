@@ -1,0 +1,38 @@
+{
+  "name": "palestra-progressi",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:android:init": "tauri android init",
+    "tauri:android:dev": "tauri android dev",
+    "tauri:android:build": "tauri android build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-opener": "2.5.4",
+    "@tauri-apps/plugin-sql": "2.4.0",
+    "@types/better-sqlite3": "9.6.0",
+    "better-sqlite3": "13.0.3",
+    "idb": "8.0.3",
+    "lucide-react": "1.31.0",
+    "next": "16.3.0",
+    "react": "19.1.9",
+    "react-dom": "19.1.9"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "4.7.0",
+    "node-gyp": "13.0.1",
+    "typescript": "5.8.3",
+    "vite": "7.3.6"
+  }
+}

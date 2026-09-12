@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Palestra Progressi",
+  "version": "0.1.0",
+  "identifier": "com.lorenzo.palestra-progressi",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Palestra Progressi",
+        "width": 400,
+        "height": 700,
+        "minWidth": 360,
+        "minHeight": 640
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "minSdkVersion": 24
+    }
+  },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:workouts.db"]
+    }
+  }
+}

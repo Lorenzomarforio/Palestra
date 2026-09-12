@@ -1,0 +1,122 @@
+/* Badge Component Styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.badge--sm {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  height: 20px;
+}
+
+.badge--md {
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  height: 24px;
+}
+
+.badge--lg {
+  font-size: var(--text-base);
+  padding: var(--space-2) var(--space-4);
+  height: 32px;
+}
+
+/* Variants */
+.badge--default {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.badge--success {
+  background-color: rgba(22, 163, 74, 0.1);
+  color: var(--color-status-success);
+}
+
+.badge--warning {
+  background-color: rgba(249, 115, 22, 0.1);
+  color: var(--color-status-warning);
+}
+
+.badge--error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-status-error);
+}
+
+.badge--info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-status-info);
+}
+
+.badge--brand {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--color-brand-700);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge--default {
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .badge--success {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: var(--color-brand-400);
+  }
+
+  .badge--warning {
+    background-color: rgba(249, 115, 22, 0.2);
+    color: var(--color-accent-400);
+  }
+
+  .badge--error {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+  }
+
+  .badge--info {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  .badge--brand {
+    background-color: rgba(34, 197, 94, 0.2);
+    color: var(--color-brand-400);
+  }
+}
+
+/* Dot indicator */
+.badge--dot {
+  padding-left: var(--space-2);
+}
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+  flex-shrink: 0;
+}
+
+.badge--sm.badge--dot .badge__dot {
+  width: 5px;
+  height: 5px;
+}
+
+.badge--lg.badge--dot .badge__dot {
+  width: 8px;
+  height: 8px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    transition: none;
+  }
+}

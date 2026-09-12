@@ -1,0 +1,574 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/Badge';
+import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
+
+interface Set {
+  id: string;
+  reps: number;
+  weight: number;
+  rpe?: number;
+  completed: boolean;
+  restTime?: number;
+}
+
+interface DetailedExercise extends WorkoutExercise {
+  sets: Set[];
+}
+
+interface DetailedWorkout extends Workout {
+  exercises: DetailedExercise[];
+}
+
+interface GymDB extends DBSchema {
+  workouts: {
+    key: string;
+    value: DetailedWorkout;
+    indexes: { 'by-date': string };
+  };
+}
+
+let dbPromise: Promise<IDBPDatabase<GymDB>>;
+
+const getDB = () => {
+  if (!dbPromise) {
+    dbPromise = openDB<GymDB>('gym-progress', 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const workoutStore = db.createObjectStore('workouts', {
+            keyPath: 'id',
+            autoIncrement: false,
+          });
+          workoutStore.createIndex('by-date', 'date');
+        }
+        if (oldVersion < 2) {
+          // Migration: ensure exercises have proper structure
+        }
+      },
+    });
+  }
+  return dbPromise;
+};
+
+const generateId = () => Math.random().toString(36).slice(2, 11);
+
+export default function WorkoutDetail() {
+  const router = useRouter();
+  const params = useParams();
+  const workoutId = params.id as string;
+
+  const [workout, setWorkout] = useState<DetailedWorkout | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showExerciseModal, setShowExerciseModal] = useState(false);
+  const [editingExercise, setEditingExercise] = useState<DetailedExercise | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  useEffect(() => {
+    loadWorkout();
+  }, [workoutId]);
+
+  const loadWorkout = async () => {
+    try {
+      const db = await getDB();
+      const workoutData = await db.get('workouts', workoutId);
+      if (workoutData) {
+        setWorkout(workoutData);
+      } else {
+        router.push('/');
+      }
+    } catch (error) {
+      console.error('Load workout error:', error);
+      router.push('/');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveWorkout = async (updatedWorkout: DetailedWorkout) => {
+    try {
+      const db = await getDB();
+      await db.put('workouts', updatedWorkout);
+      setWorkout(updatedWorkout);
+    } catch (error) {
+      console.error('Save workout error:', error);
+    }
+  };
+
+  const addExercise = (exercise: Exercise) => {
+    if (!workout) return;
+    const newExercise: DetailedExercise = {
+      id: generateId(),
+      exerciseId: exercise.id,
+      exercise,
+      sets: [{ id: generateId(), reps: 10, weight: 0, completed: false }],
+      order: workout.exercises.length,
+    };
+    saveWorkout({ ...workout, exercises: [...workout.exercises, newExercise] });
+    setShowExerciseModal(false);
+  };
+
+  const updateExercise = (updatedExercise: DetailedExercise) => {
+    if (!workout) return;
+    saveWorkout({
+      ...workout,
+      exercises: workout.exercises.map((ex) => (ex.id === updatedExercise.id ? updatedExercise : ex)),
+    });
+    setEditingExercise(null);
+  };
+
+  const deleteExercise = (exerciseId: string) => {
+    if (!workout) return;
+    saveWorkout({
+      ...workout,
+      exercises: workout.exercises.filter((ex) => ex.id !== exerciseId),
+    });
+  };
+
+  const addSet = (exerciseId: string) => {
+    if (!workout) return;
+    saveWorkout({
+      ...workout,
+      exercises: workout.exercises.map((ex) =>
+        ex.id === exerciseId
+          ? { ...ex, sets: [...ex.sets, { id: generateId(), reps: 10, weight: 0, completed: false }] }
+          : ex
+      ),
+    });
+  };
+
+  const updateSet = (exerciseId: string, setId: string, updates: Partial<Set>) => {
+    if (!workout) return;
+    saveWorkout({
+      ...workout,
+      exercises: workout.exercises.map((ex) =>
+        ex.id === exerciseId
+          ? {
+              ...ex,
+              sets: ex.sets.map((s) => (s.id === setId ? { ...s, ...updates } : s)),
+            }
+          : ex
+      ),
+    });
+  };
+
+  const deleteSet = (exerciseId: string, setId: string) => {
+    if (!workout) return;
+    saveWorkout({
+      ...workout,
+      exercises: workout.exercises.map((ex) =>
+        ex.id === exerciseId
+          ? { ...ex, sets: ex.sets.filter((s) => s.id !== setId) }
+          : ex
+      ),
+    });
+  };
+
+  const reorderExercises = (fromIndex: number, toIndex: number) => {
+    if (!workout) return;
+    const exercises = [...workout.exercises];
+    const [removed] = exercises.splice(fromIndex, 1);
+    exercises.splice(toIndex, 0, removed);
+    saveWorkout({
+      ...workout,
+      exercises: exercises.map((ex, index) => ({ ...ex, order: index })),
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+    (e.currentTarget as HTMLElement).style.opacity = '0.5';
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    (e.currentTarget as HTMLElement).style.opacity = '1';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (fromIndex !== toIndex) {
+      reorderExercises(fromIndex, toIndex);
+    }
+  };
+
+  const filteredExercises = COMMON_EXERCISES.filter((ex) => {
+    const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || ex.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = ['all', ...new Set(COMMON_EXERCISES.map((ex) => ex.category))];
+
+  const totalVolume = workout
+    ? workout.exercises.reduce((sum, ex) => sum + calculateVolume(ex.sets), 0)
+    : 0;
+
+  const completedSets = workout
+    ? workout.exercises.reduce((sum, ex) => sum + ex.sets.filter((s) => s.completed).length, 0)
+    : 0;
+
+  const totalSets = workout
+    ? workout.exercises.reduce((sum, ex) => sum + ex.sets.length, 0)
+    : 0;
+
+  if (loading) {
+    return (
+      <div className="container" style={{ paddingTop: 'var(--space-6)' }}>
+        <div className="flex-center" style={{ minHeight: '300px' }}>
+          <div className="skeleton" style={{ width: '200px', height: '40px', borderRadius: 'var(--radius-md)' }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!workout) return null;
+
+  return (
+    <div className="container" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-8)' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+        <div>
+          <h1 style={{ fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', marginBottom: 'var(--space-1)' }}>
+            {workout.name}
+          </h1>
+          <p style={{ color: 'var(--color-text-tertiary)' }}>
+            {new Date(workout.date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
+            ← Indietro
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
+        <Card variant="default" padding="md">
+          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
+            {totalVolume.toLocaleString()}
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Volume Totale (kg)</div>
+        </Card>
+        <Card variant="default" padding="md">
+          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
+            {completedSets}/{totalSets}
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Serie Completate</div>
+        </Card>
+        <Card variant="default" padding="md">
+          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
+            {workout.exercises.length}
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Esercizi</div>
+        </Card>
+      </div>
+
+      {/* Exercise List */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+        <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-semibold)' }}>Esercizi</h2>
+        <Button onClick={() => setShowExerciseModal(true)} leftIcon={<span>+</span>}>
+          Aggiungi Esercizio
+        </Button>
+      </div>
+
+      {workout.exercises.length === 0 ? (
+        <Card variant="outlined" padding="lg" style={{ textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-4)' }}>
+            Nessun esercizio aggiunto. Inizia aggiungendo il primo esercizio!
+          </p>
+          <Button onClick={() => setShowExerciseModal(true)} leftIcon={<span>+</span>}>
+            Aggiungi Esercizio
+          </Button>
+        </Card>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {workout.exercises.map((exercise, index) => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              index={index}
+              onUpdate={(updates) => updateExercise({ ...exercise, ...updates })}
+              onDelete={() => deleteExercise(exercise.id)}
+              onAddSet={() => addSet(exercise.id)}
+              onUpdateSet={(setId, updates) => updateSet(exercise.id, setId, updates)}
+              onDeleteSet={(setId) => deleteSet(exercise.id, setId)}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, index)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Add Exercise Modal */}
+      <Modal
+        isOpen={showExerciseModal}
+        onClose={() => setShowExerciseModal(false)}
+        title="Aggiungi Esercizio"
+        size="lg"
+      >
+        <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <Input
+              placeholder="Cerca esercizio..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              leftIcon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </Button>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-3)' }}>
+            {filteredExercises.map((ex) => (
+              <Card
+                key={ex.id}
+                variant="outlined"
+                padding="md"
+                onClick={() => addExercise(ex)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h4 style={{ fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-1)' }}>{ex.name}</h4>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                      <Badge variant="brand" size="sm">{ex.category}</Badge>
+                      {ex.equipment && <Badge variant="default" size="sm">{ex.equipment.replace('_', ' ')}</Badge>}
+                      {ex.muscleGroups.slice(0, 3).map((mg) => (
+                        <Badge key={mg} variant="info" size="sm">{mg.replace('_', ' ')}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <span style={{ color: 'var(--color-text-tertiary)' }}>+</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Exercise Modal */}
+      {editingExercise && (
+        <Modal
+          isOpen={!!editingExercise}
+          onClose={() => setEditingExercise(null)}
+          title={`Modifica: ${editingExercise.exercise.name}`}
+          size="lg"
+        >
+          <ExerciseEditor
+            exercise={editingExercise}
+            onSave={(updates) => updateExercise({ ...editingExercise, ...updates })}
+            onClose={() => setEditingExercise(null)}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function ExerciseCard({
+  exercise,
+  index,
+  onUpdate,
+  onDelete,
+  onAddSet,
+  onUpdateSet,
+  onDeleteSet,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+}: {
+  exercise: DetailedExercise;
+  index: number;
+  onUpdate: (updates: Partial<DetailedExercise>) => void;
+  onDelete: () => void;
+  onAddSet: () => void;
+  onUpdateSet: (setId: string, updates: Partial<Set>) => void;
+  onDeleteSet: (setId: string) => void;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDragEnd: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const exerciseVolume = calculateVolume(exercise.sets);
+  const completedSets = exercise.sets.filter((s) => s.completed).length;
+
+  return (
+    <Card variant="default" padding="none" draggable onDragStart={(e) => onDragStart(e, index)} onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop}>
+      <CardHeader
+        title={exercise.exercise.name}
+        subtitle={`${completedSets}/${exercise.sets.length} serie • ${exerciseVolume.toLocaleString()} kg volume`}
+        action={
+          <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+            <Button variant="ghost" size="sm" onClick={() => onUpdate({ sets: [...exercise.sets, { id: generateId(), reps: 10, weight: 0, completed: false }] })}>
+              + Serie
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
+              {expanded ? '−' : '+'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onDelete}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            </Button>
+          </div>
+        }
+      />
+      {expanded && (
+        <CardContent>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {exercise.sets.map((set, setIndex) => (
+              <SetRow
+                key={set.id}
+                set={set}
+                setNumber={setIndex + 1}
+                onUpdate={(updates) => onUpdateSet(set.id, updates)}
+                onDelete={() => onDeleteSet(set.id)}
+              />
+            ))}
+            <Button variant="secondary" size="sm" onClick={onAddSet} style={{ alignSelf: 'flex-start' }}>
+              + Aggiungi Serie
+            </Button>
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+function SetRow({ set, setNumber, onUpdate, onDelete }: { set: Set; setNumber: number; onUpdate: (updates: Partial<Set>) => void; onDelete: () => void }) {
+  const oneRepMax = calculateOneRepMax(set.weight, set.reps);
+  const checkboxId = `set-${set.id}-completed`;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap', padding: 'var(--space-2)', background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+      <label htmlFor={checkboxId} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', width: '44px', height: '44px' }}>
+        <input
+          id={checkboxId}
+          type="checkbox"
+          checked={set.completed}
+          onChange={(e) => onUpdate({ completed: e.target.checked })}
+          style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--color-brand-600)' }}
+        />
+        <span className="visually-hidden">Serie {setNumber} completata</span>
+      </label>
+      <span style={{ fontWeight: 'var(--font-medium)', minWidth: '40px' }}>Serie {setNumber}</span>
+      <Input
+        type="number"
+        placeholder="Rip"
+        value={set.reps}
+        onChange={(e) => onUpdate({ reps: parseInt(e.target.value) || 0 })}
+        style={{ width: '70px' }}
+        min={1}
+        max={100}
+      />
+      <span style={{ color: 'var(--color-text-tertiary)' }}>×</span>
+      <Input
+        type="number"
+        placeholder="Peso"
+        value={set.weight}
+        onChange={(e) => onUpdate({ weight: parseFloat(e.target.value) || 0 })}
+        style={{ width: '80px' }}
+        min={0}
+        max={500}
+        step={0.5}
+      />
+      <span style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>kg</span>
+      {oneRepMax > 0 && (
+        <Badge variant="info" size="sm">1RM: ~{oneRepMax}kg</Badge>
+      )}
+      <Button variant="ghost" size="sm" onClick={onDelete} style={{ marginLeft: 'auto' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+      </Button>
+    </div>
+  );
+}
+
+function ExerciseEditor({ exercise, onSave, onClose }: { exercise: DetailedExercise; onSave: (updates: Partial<DetailedExercise>) => void; onClose: () => void }) {
+  const [sets, setSets] = useState<Set[]>(exercise.sets);
+
+  const handleSetChange = (setId: string, field: keyof Set, value: string | number | boolean) => {
+    setSets((prev) => prev.map((s) => (s.id === setId ? { ...s, [field]: value } : s)));
+  };
+
+  const addSet = () => {
+    setSets((prev) => [...prev, { id: generateId(), reps: 10, weight: 0, completed: false }]);
+  };
+
+  const deleteSet = (setId: string) => {
+    setSets((prev) => prev.filter((s) => s.id !== setId));
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
+        <h4 style={{ marginBottom: 'var(--space-2)' }}>Serie</h4>
+        {sets.map((set, index) => (
+          <div key={set.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 'var(--font-medium)', minWidth: '50px' }}>Serie {index + 1}</span>
+            <Input
+              type="number"
+              placeholder="Rip"
+              value={set.reps}
+              onChange={(e) => handleSetChange(set.id, 'reps', parseInt(e.target.value) || 0)}
+              style={{ width: '70px' }}
+              min={1}
+            />
+            <span>×</span>
+            <Input
+              type="number"
+              placeholder="Peso (kg)"
+              value={set.weight}
+              onChange={(e) => handleSetChange(set.id, 'weight', parseFloat(e.target.value) || 0)}
+              style={{ width: '100px' }}
+              min={0}
+              step={0.5}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', fontSize: 'var(--text-sm)', cursor: 'pointer', minHeight: '44px' }}>
+              <input
+                type="checkbox"
+                checked={set.completed}
+                onChange={(e) => handleSetChange(set.id, 'completed', e.target.checked)}
+                style={{ width: '20px', height: '20px', accentColor: 'var(--color-brand-600)' }}
+              />
+              Completata
+            </label>
+            <Button variant="ghost" size="sm" onClick={() => deleteSet(set.id)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </Button>
+          </div>
+        ))}
+        <Button variant="secondary" size="sm" onClick={addSet}>
+          + Aggiungi Serie
+        </Button>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+        <Button variant="secondary" onClick={onClose}>Annulla</Button>
+        <Button onClick={() => { onSave({ sets }); onClose(); }}>Salva</Button>
+      </div>
+    </div>
+  );
+}

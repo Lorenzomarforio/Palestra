@@ -1,0 +1,23 @@
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background-color: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  padding: var(--space-1);
+}
+
+.theme-toggle__icon {
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
+.theme-toggle__label {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .theme-toggle__label {
+    display: inline;
+  }
+}
