@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { listWorkouts } from '@/lib/db';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -15,33 +15,6 @@ interface Workout {
   exercises: { name: string; sets: { weight: number; reps: number }[] }[];
 }
 
-interface GymDB extends DBSchema {
-  workouts: {
-    key: string;
-    value: Workout;
-    indexes: { 'by-date': string };
-  };
-}
-
-let dbPromise: Promise<IDBPDatabase<GymDB>>;
-
-const getDB = () => {
-  if (!dbPromise) {
-    dbPromise = openDB<GymDB>('gym-progress', 2, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          const workoutStore = db.createObjectStore('workouts', {
-            keyPath: 'id',
-            autoIncrement: false,
-          });
-          workoutStore.createIndex('by-date', 'date');
-        }
-      },
-    });
-  }
-  return dbPromise;
-};
-
 export default function Dashboard() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,8 +26,7 @@ export default function Dashboard() {
 
   const loadWorkouts = async () => {
     try {
-      const db = await getDB();
-      const rows = await db.getAllFromIndex('workouts', 'by-date');
+      const rows = await listWorkouts<Workout>();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);

@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { getWorkout, putWorkout } from '@/lib/db';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
+import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, Search } from 'lucide-react';
 
 interface Set {
   id: string;
@@ -27,42 +28,20 @@ interface DetailedWorkout extends Workout {
   exercises: DetailedExercise[];
 }
 
-interface GymDB extends DBSchema {
-  workouts: {
-    key: string;
-    value: DetailedWorkout;
-    indexes: { 'by-date': string };
-  };
-}
-
-let dbPromise: Promise<IDBPDatabase<GymDB>>;
-
-const getDB = () => {
-  if (!dbPromise) {
-    dbPromise = openDB<GymDB>('gym-progress', 2, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          const workoutStore = db.createObjectStore('workouts', {
-            keyPath: 'id',
-            autoIncrement: false,
-          });
-          workoutStore.createIndex('by-date', 'date');
-        }
-        if (oldVersion < 2) {
-          // Migration: ensure exercises have proper structure
-        }
-      },
-    });
-  }
-  return dbPromise;
-};
-
 const generateId = () => Math.random().toString(36).slice(2, 11);
 
 export default function WorkoutDetail() {
+  return (
+    <Suspense fallback={null}>
+      <WorkoutDetailContent />
+    </Suspense>
+  );
+}
+
+function WorkoutDetailContent() {
   const router = useRouter();
-  const params = useParams();
-  const workoutId = params.id as string;
+  const searchParams = useSearchParams();
+  const workoutId = searchParams.get('id') ?? '';
 
   const [workout, setWorkout] = useState<DetailedWorkout | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,13 +51,16 @@ export default function WorkoutDetail() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   useEffect(() => {
+    if (!workoutId) {
+      router.push('/');
+      return;
+    }
     loadWorkout();
   }, [workoutId]);
 
   const loadWorkout = async () => {
     try {
-      const db = await getDB();
-      const workoutData = await db.get('workouts', workoutId);
+      const workoutData = await getWorkout<DetailedWorkout>(workoutId);
       if (workoutData) {
         setWorkout(workoutData);
       } else {
@@ -94,8 +76,7 @@ export default function WorkoutDetail() {
 
   const saveWorkout = async (updatedWorkout: DetailedWorkout) => {
     try {
-      const db = await getDB();
-      await db.put('workouts', updatedWorkout);
+      await putWorkout(updatedWorkout);
       setWorkout(updatedWorkout);
     } catch (error) {
       console.error('Save workout error:', error);
@@ -248,8 +229,8 @@ export default function WorkoutDetail() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
-            ← Indietro
+          <Button variant="ghost" size="sm" onClick={() => router.push('/')} leftIcon={<ArrowLeft size={16} />}>
+            Indietro
           </Button>
         </div>
       </div>
@@ -279,7 +260,7 @@ export default function WorkoutDetail() {
       {/* Exercise List */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-semibold)' }}>Esercizi</h2>
-        <Button onClick={() => setShowExerciseModal(true)} leftIcon={<span>+</span>}>
+        <Button onClick={() => setShowExerciseModal(true)} leftIcon={<Plus size={16} />}>
           Aggiungi Esercizio
         </Button>
       </div>
@@ -289,7 +270,7 @@ export default function WorkoutDetail() {
           <p style={{ color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-4)' }}>
             Nessun esercizio aggiunto. Inizia aggiungendo il primo esercizio!
           </p>
-          <Button onClick={() => setShowExerciseModal(true)} leftIcon={<span>+</span>}>
+          <Button onClick={() => setShowExerciseModal(true)} leftIcon={<Plus size={16} />}>
             Aggiungi Esercizio
           </Button>
         </Card>
@@ -327,7 +308,7 @@ export default function WorkoutDetail() {
               placeholder="Cerca esercizio..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>}
+              leftIcon={<Search size={20} />}
             />
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-4)', flexWrap: 'wrap' }}>
@@ -425,14 +406,14 @@ function ExerciseCard({
         subtitle={`${completedSets}/${exercise.sets.length} serie • ${exerciseVolume.toLocaleString()} kg volume`}
         action={
           <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-            <Button variant="ghost" size="sm" onClick={() => onUpdate({ sets: [...exercise.sets, { id: generateId(), reps: 10, weight: 0, completed: false }] })}>
-              + Serie
+            <Button variant="ghost" size="sm" onClick={() => onUpdate({ sets: [...exercise.sets, { id: generateId(), reps: 10, weight: 0, completed: false }] })} leftIcon={<Plus size={14} />}>
+              Serie
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
-              {expanded ? '−' : '+'}
+            <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Comprimi esercizio' : 'Espandi esercizio'}>
+              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onDelete}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            <Button variant="ghost" size="sm" onClick={onDelete} aria-label="Elimina esercizio">
+              <Trash2 size={16} />
             </Button>
           </div>
         }
@@ -500,8 +481,8 @@ function SetRow({ set, setNumber, onUpdate, onDelete }: { set: Set; setNumber: n
       {oneRepMax > 0 && (
         <Badge variant="info" size="sm">1RM: ~{oneRepMax}kg</Badge>
       )}
-      <Button variant="ghost" size="sm" onClick={onDelete} style={{ marginLeft: 'auto' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+      <Button variant="ghost" size="sm" onClick={onDelete} aria-label={`Elimina serie ${setNumber}`} style={{ marginLeft: 'auto' }}>
+        <X size={16} />
       </Button>
     </div>
   );
@@ -556,8 +537,8 @@ function ExerciseEditor({ exercise, onSave, onClose }: { exercise: DetailedExerc
               />
               Completata
             </label>
-            <Button variant="ghost" size="sm" onClick={() => deleteSet(set.id)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            <Button variant="ghost" size="sm" onClick={() => deleteSet(set.id)} aria-label={`Elimina serie ${index + 1}`}>
+              <X size={16} />
             </Button>
           </div>
         ))}

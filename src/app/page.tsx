@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { listWorkouts, putWorkout, deleteWorkout as deleteWorkoutFromDb } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
@@ -35,33 +35,6 @@ interface Workout {
   date: string;
   exercises: { sets: { weight: number; reps: number }[] }[];
 }
-
-interface GymDB extends DBSchema {
-  workouts: {
-    key: string;
-    value: Workout;
-    indexes: { 'by-date': string };
-  };
-}
-
-let dbPromise: Promise<IDBPDatabase<GymDB>>;
-
-const getDB = () => {
-  if (!dbPromise) {
-    dbPromise = openDB<GymDB>('gym-progress', 2, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1) {
-          const workoutStore = db.createObjectStore('workouts', {
-            keyPath: 'id',
-            autoIncrement: false,
-          });
-          workoutStore.createIndex('by-date', 'date');
-        }
-      },
-    });
-  }
-  return dbPromise;
-};
 
 const generateId = () => Math.random().toString(36).slice(2, 11);
 
@@ -173,8 +146,7 @@ export default function Home() {
 
   const loadWorkouts = useCallback(async () => {
     try {
-      const db = await getDB();
-      const rows = await db.getAllFromIndex('workouts', 'by-date');
+      const rows = await listWorkouts<Workout>();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
@@ -214,12 +186,11 @@ export default function Home() {
     if (!workoutName) return;
     
     try {
-      const db = await getDB();
       const workout: Workout = {
         id: generateId(),
         name: workoutName,
         date: new Date().toISOString().split('T')[0],
-        exercises: templateExercises 
+        exercises: templateExercises
           ? templateExercises.map((exName, index) => ({
               name: exName,
               sets: [{ weight: 0, reps: 10 }],
@@ -227,12 +198,12 @@ export default function Home() {
             }))
           : [],
       };
-      await db.add('workouts', workout);
+      await putWorkout(workout);
       setWorkouts([workout, ...workouts]);
       setShowModal(false);
       setShowTemplateModal(false);
       setNewWorkoutName('');
-      router.push(`/workout/${workout.id}`);
+      router.push(`/workout?id=${workout.id}`);
     } catch (error) {
       console.error('Create workout error:', error);
     }
@@ -245,18 +216,17 @@ export default function Home() {
   const duplicateWorkout = async (id: string) => {
     setDuplicatingId(id);
     try {
-      const db = await getDB();
       const workout = workouts.find(w => w.id === id);
       if (!workout) return;
-      
+
       const newWorkout: Workout = {
         ...workout,
         id: generateId(),
         date: new Date().toISOString().split('T')[0],
       };
-      await db.add('workouts', newWorkout);
+      await putWorkout(newWorkout);
       setWorkouts([newWorkout, ...workouts]);
-      router.push(`/workout/${newWorkout.id}`);
+      router.push(`/workout?id=${newWorkout.id}`);
     } catch (error) {
       console.error('Duplicate workout error:', error);
     } finally {
@@ -266,8 +236,7 @@ export default function Home() {
 
   const deleteWorkout = async (id: string) => {
     try {
-      const db = await getDB();
-      await db.delete('workouts', id);
+      await deleteWorkoutFromDb(id);
       setWorkouts(workouts.filter((w) => w.id !== id));
     } catch (error) {
       console.error('Delete workout error:', error);
@@ -358,7 +327,7 @@ export default function Home() {
         <Card 
           variant="elevated" 
           padding="md" 
-          onClick={() => router.push(`/workout/${lastWorkout.id}`)}
+          onClick={() => router.push(`/workout?id=${lastWorkout.id}`)}
           style={{ 
             cursor: 'pointer', 
             marginBottom: 'var(--space-6)',
@@ -370,7 +339,7 @@ export default function Home() {
             title="Continua l'ultimo allenamento"
             subtitle={formatDate(lastWorkout.date)}
             action={
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/workout/${lastWorkout.id}`); }}>
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/workout?id=${lastWorkout.id}`); }}>
                 <ArrowRight size={16} aria-hidden="true" />
                 Apri
               </Button>
@@ -470,7 +439,7 @@ export default function Home() {
                       stats={stats}
                       volumeProgress={volumeProgress}
                       isLast={isLast}
-                      onOpen={() => router.push(`/workout/${workout.id}`)}
+                      onOpen={() => router.push(`/workout?id=${workout.id}`)}
                       onDuplicate={() => duplicateWorkout(workout.id)}
                       onDelete={() => setDeleteConfirmId(workout.id)}
                       isDuplicating={duplicatingId === workout.id}
