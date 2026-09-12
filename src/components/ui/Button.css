@@ -4,12 +4,15 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  font-family: var(--font-sans);
-  font-weight: var(--font-medium);
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-out);
+  touch-action: manipulation;
+  transition: all var(--duration-fast) var(--ease-spring);
   white-space: nowrap;
   user-select: none;
   position: relative;
@@ -19,6 +22,10 @@
 .btn:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 /* Sizes */
@@ -58,12 +65,12 @@
 .btn--primary {
   background-color: var(--color-interactive-primary);
   color: var(--color-text-inverse);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--glow-brand);
 }
 
 .btn--primary:hover:not(:disabled) {
   background-color: var(--color-interactive-primary-hover);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--glow-brand), var(--shadow-md);
   transform: translateY(-1px);
 }
 

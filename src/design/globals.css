@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap');
 @import './tokens.css';
 
 * {
@@ -11,6 +12,11 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  color-scheme: dark;
+}
+
+:root.light {
+  color-scheme: light;
 }
 
 body {
@@ -23,6 +29,13 @@ body {
   min-height: 100vh;
   transition: background-color var(--duration-normal) var(--ease-out),
               color var(--duration-normal) var(--ease-out);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
 }
 
 #root {

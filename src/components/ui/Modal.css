@@ -2,8 +2,8 @@
 .modal__overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
+  background-color: rgba(3, 5, 8, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,6 +14,7 @@
 
 .modal {
   background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-2xl);
   max-height: calc(100vh - var(--space-8));
@@ -77,8 +78,11 @@
 }
 
 .modal__title {
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
   color: var(--color-text-primary);
   line-height: var(--leading-tight);
   margin: 0;

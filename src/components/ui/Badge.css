@@ -3,8 +3,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  font-family: var(--font-sans);
-  font-weight: var(--font-medium);
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
   border-radius: var(--radius-full);
   white-space: nowrap;
   transition: all var(--duration-fast) var(--ease-out);
@@ -28,67 +30,61 @@
   height: 32px;
 }
 
-/* Variants */
+/* Variants - tuned for the dark default */
 .badge--default {
   background-color: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
 }
 
 .badge--success {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: var(--color-brand-400);
+}
+
+.badge--warning {
+  background-color: rgba(249, 115, 22, 0.2);
+  color: var(--color-accent-400);
+}
+
+.badge--error {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.badge--info {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.badge--brand {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: var(--color-brand-400);
+}
+
+/* Light mode overrides */
+:root.light .badge--success {
   background-color: rgba(22, 163, 74, 0.1);
   color: var(--color-status-success);
 }
 
-.badge--warning {
+:root.light .badge--warning {
   background-color: rgba(249, 115, 22, 0.1);
   color: var(--color-status-warning);
 }
 
-.badge--error {
+:root.light .badge--error {
   background-color: rgba(239, 68, 68, 0.1);
   color: var(--color-status-error);
 }
 
-.badge--info {
+:root.light .badge--info {
   background-color: rgba(59, 130, 246, 0.1);
   color: var(--color-status-info);
 }
 
-.badge--brand {
+:root.light .badge--brand {
   background-color: rgba(34, 197, 94, 0.1);
   color: var(--color-brand-700);
-}
-
-@media (prefers-color-scheme: dark) {
-  .badge--default {
-    background-color: var(--color-bg-tertiary);
-    color: var(--color-text-secondary);
-  }
-
-  .badge--success {
-    background-color: rgba(34, 197, 94, 0.2);
-    color: var(--color-brand-400);
-  }
-
-  .badge--warning {
-    background-color: rgba(249, 115, 22, 0.2);
-    color: var(--color-accent-400);
-  }
-
-  .badge--error {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-  }
-
-  .badge--info {
-    background-color: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-  }
-
-  .badge--brand {
-    background-color: rgba(34, 197, 94, 0.2);
-    color: var(--color-brand-400);
-  }
 }
 
 /* Dot indicator */

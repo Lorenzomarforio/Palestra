@@ -1,9 +1,10 @@
 :root {
   /* ==========================================
      COLOR TOKENS - Semantic Design System
+     Style: Dark Athletic / Vibrant & Block-based
      ========================================== */
 
-  /* Brand Colors - Fitness Green/Energy */
+  /* Brand Colors - Fitness Neon Green/Energy */
   --color-brand-50: #f0fdf4;
   --color-brand-100: #dcfce7;
   --color-brand-200: #bbf7d0;
@@ -41,43 +42,46 @@
   --color-neutral-900: #0f172a;
   --color-neutral-950: #020617;
 
-  /* Semantic Colors - Light Mode */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f8fafc;
-  --color-bg-tertiary: #f1f5f9;
-  --color-bg-elevated: #ffffff;
+  /* Semantic Colors - Dark Mode is the DEFAULT (athletic/bold identity) */
+  --color-bg-primary: #0a0d12;
+  --color-bg-secondary: #10141b;
+  --color-bg-tertiary: #1a2029;
+  --color-bg-elevated: #161c24;
 
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-tertiary: #64748b;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #f4f6f9;
+  --color-text-secondary: #c3cad6;
+  --color-text-tertiary: #838d9e;
+  --color-text-inverse: #0a0d12;
 
-  --color-border-primary: #e2e8f0;
-  --color-border-secondary: #cbd5e1;
-  --color-border-focus: #22c55e;
+  --color-border-primary: #232b36;
+  --color-border-secondary: #313b48;
+  --color-border-focus: #4ade80;
 
-  --color-interactive-primary: #16a34a;
-  --color-interactive-primary-hover: #15803d;
-  --color-interactive-primary-active: #166534;
-  --color-interactive-secondary: #f1f5f9;
-  --color-interactive-secondary-hover: #e2e8f0;
-  --color-interactive-secondary-active: #cbd5e1;
+  --color-interactive-primary: #22c55e;
+  --color-interactive-primary-hover: #4ade80;
+  --color-interactive-primary-active: #16a34a;
+  --color-interactive-secondary: #1a2029;
+  --color-interactive-secondary-hover: #232b36;
+  --color-interactive-secondary-active: #313b48;
 
-  --color-status-success: #16a34a;
+  --color-status-success: #22c55e;
   --color-status-warning: #f97316;
   --color-status-error: #ef4444;
   --color-status-info: #3b82f6;
 
-  /* Shadow System - Light Mode */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 6px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 10px 15px rgba(15, 23, 42, 0.1), 0 4px 6px rgba(15, 23, 42, 0.05);
-  --shadow-xl: 0 20px 25px rgba(15, 23, 42, 0.15), 0 10px 10px rgba(15, 23, 42, 0.04);
-  --shadow-2xl: 0 25px 50px rgba(15, 23, 42, 0.2);
+  /* Shadow System - Dark Mode (deep + colored glow) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.7);
+
+  --glow-brand: 0 0 0 1px rgba(74, 222, 128, 0.3), 0 8px 24px rgba(34, 197, 94, 0.35);
+  --glow-accent: 0 0 0 1px rgba(251, 146, 60, 0.3), 0 8px 24px rgba(249, 115, 22, 0.35);
 
   /* Focus Ring */
-  --focus-ring: 0 0 0 3px rgba(34, 197, 94, 0.4);
+  --focus-ring: 0 0 0 3px rgba(74, 222, 128, 0.45);
   --focus-ring-offset: 2px;
 
   /* ==========================================
@@ -101,8 +105,14 @@
   /* ==========================================
      TYPOGRAPHY TOKENS
      ========================================== */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Barlow Condensed', var(--font-sans);
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-wider: 0.08em;
 
   /* Font Sizes - Fluid Scale */
   --text-xs: 0.75rem;    /* 12px */
@@ -131,12 +141,12 @@
      BORDER RADIUS TOKENS
      ========================================== */
   --radius-none: 0;
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
   /* ==========================================
@@ -202,74 +212,39 @@
   --animation-shimmer: shimmer 2s infinite;
 }
 
-/* Dark Mode Tokens - Media Query (fallback) */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --color-bg-primary: #0f172a;
-    --color-bg-secondary: #1e293b;
-    --color-bg-tertiary: #334155;
-    --color-bg-elevated: #1e293b;
-
-    --color-text-primary: #f8fafc;
-    --color-text-secondary: #e2e8f0;
-    --color-text-tertiary: #94a3b8;
-    --color-text-inverse: #0f172a;
-
-    --color-border-primary: #334155;
-    --color-border-secondary: #475569;
-    --color-border-focus: #4ade80;
-
-    --color-interactive-primary: #22c55e;
-    --color-interactive-primary-hover: #4ade80;
-    --color-interactive-primary-active: #16a34a;
-    --color-interactive-secondary: #334155;
-    --color-interactive-secondary-hover: #475569;
-    --color-interactive-secondary-active: #64748b;
-
-    /* Shadows - Dark Mode uses brightness layers instead */
-    --shadow-xs: none;
-    --shadow-sm: none;
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
-    --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.6);
-
-    --focus-ring: 0 0 0 3px rgba(74, 222, 128, 0.4);
-  }
-}
-
-/* Dark Mode Tokens - Class-based (explicit) */
+/* Dark Mode is the default identity of the app (set on :root above).
+   :root.dark exists only so an explicit toggle click has a class to add;
+   its values mirror the :root defaults. */
 :root.dark {
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
-  --color-bg-elevated: #1e293b;
+  --color-bg-primary: #0a0d12;
+  --color-bg-secondary: #10141b;
+  --color-bg-tertiary: #1a2029;
+  --color-bg-elevated: #161c24;
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-tertiary: #94a3b8;
-  --color-text-inverse: #0f172a;
+  --color-text-primary: #f4f6f9;
+  --color-text-secondary: #c3cad6;
+  --color-text-tertiary: #838d9e;
+  --color-text-inverse: #0a0d12;
 
-  --color-border-primary: #334155;
-  --color-border-secondary: #475569;
+  --color-border-primary: #232b36;
+  --color-border-secondary: #313b48;
   --color-border-focus: #4ade80;
 
   --color-interactive-primary: #22c55e;
   --color-interactive-primary-hover: #4ade80;
   --color-interactive-primary-active: #16a34a;
-  --color-interactive-secondary: #334155;
-  --color-interactive-secondary-hover: #475569;
-  --color-interactive-secondary-active: #64748b;
+  --color-interactive-secondary: #1a2029;
+  --color-interactive-secondary-hover: #232b36;
+  --color-interactive-secondary-active: #313b48;
 
-  /* Shadows - Dark Mode uses brightness layers instead */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
-  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.6);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.7);
 
-  --focus-ring: 0 0 0 3px rgba(74, 222, 128, 0.4);
+  --focus-ring: 0 0 0 3px rgba(74, 222, 128, 0.45);
 }
 
 /* Light Mode Tokens - Class-based (explicit) */
@@ -304,6 +279,9 @@
   --shadow-2xl: 0 25px 50px rgba(15, 23, 42, 0.2);
 
   --focus-ring: 0 0 0 3px rgba(34, 197, 94, 0.4);
+
+  --glow-brand: 0 0 0 1px rgba(22, 163, 74, 0.15), 0 8px 20px rgba(22, 163, 74, 0.2);
+  --glow-accent: 0 0 0 1px rgba(234, 88, 12, 0.15), 0 8px 20px rgba(234, 88, 12, 0.2);
 }
 
 /* Reduced Motion */

@@ -1,9 +1,10 @@
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { Button } from './Button';
 import './ThemeToggle.css';
 
 export function ThemeToggle() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="theme-toggle" role="group" aria-label="Theme selection">
@@ -12,8 +13,9 @@ export function ThemeToggle() {
         size="sm"
         onClick={() => setTheme('light')}
         aria-pressed={theme === 'light'}
+        aria-label="Light theme"
       >
-        <span className="theme-toggle__icon" aria-hidden="true">☀️</span>
+        <Sun size={16} aria-hidden="true" />
         <span className="theme-toggle__label">Light</span>
       </Button>
       <Button
@@ -21,8 +23,9 @@ export function ThemeToggle() {
         size="sm"
         onClick={() => setTheme('dark')}
         aria-pressed={theme === 'dark'}
+        aria-label="Dark theme"
       >
-        <span className="theme-toggle__icon" aria-hidden="true">🌙</span>
+        <Moon size={16} aria-hidden="true" />
         <span className="theme-toggle__label">Dark</span>
       </Button>
       <Button
@@ -30,8 +33,9 @@ export function ThemeToggle() {
         size="sm"
         onClick={() => setTheme('system')}
         aria-pressed={theme === 'system'}
+        aria-label="System theme"
       >
-        <span className="theme-toggle__icon" aria-hidden="true">💻</span>
+        <Monitor size={16} aria-hidden="true" />
         <span className="theme-toggle__label">System</span>
       </Button>
     </div>
