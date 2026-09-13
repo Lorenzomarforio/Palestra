@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
+import { SupplementTracker } from '@/components/ui/SupplementTracker';
 import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
 import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search } from 'lucide-react';
 
@@ -82,6 +83,15 @@ function WorkoutDetailContent() {
     } catch (error) {
       console.error('Save workout error:', error);
     }
+  };
+
+  const toggleSupplement = (supplementId: string) => {
+    if (!workout) return;
+    const current = workout.supplements ?? {};
+    saveWorkout({
+      ...workout,
+      supplements: { ...current, [supplementId]: !current[supplementId] },
+    });
   };
 
   const handleDeleteWorkout = async () => {
@@ -226,6 +236,11 @@ function WorkoutDetailContent() {
             Elimina
           </Button>
         </div>
+      </div>
+
+      {/* Supplement Tracker */}
+      <div style={{ marginBottom: 'var(--space-6)' }}>
+        <SupplementTracker intake={workout.supplements ?? {}} onToggle={toggleSupplement} />
       </div>
 
       {/* Stats Cards */}

@@ -75,6 +75,7 @@ export interface Workout {
   exercises: WorkoutExercise[];
   notes?: string;
   completed: boolean;
+  supplements?: Record<string, boolean>; // keyed by supplement id, see src/config/supplements.ts
 }
 
 export interface PersonalRecord {
