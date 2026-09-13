@@ -288,7 +288,7 @@ export default function Home() {
                 padding: 'var(--space-1) var(--space-3)', 
                 background: 'var(--color-accent-100)', 
                 color: 'var(--color-accent-700)',
-                borderRadius: 'var(--radius-pill)',
+                borderRadius: 'var(--radius-full)',
                 fontSize: 'var(--text-sm)',
                 fontWeight: 'var(--font-semibold)',
               }}>
@@ -328,10 +328,10 @@ export default function Home() {
           variant="elevated" 
           padding="md" 
           onClick={() => router.push(`/workout?id=${lastWorkout.id}`)}
-          style={{ 
-            cursor: 'pointer', 
+          style={{
+            cursor: 'pointer',
             marginBottom: 'var(--space-6)',
-            borderLeft: '4px solid var(--color-brand-500)',
+            borderColor: 'var(--color-brand-500)',
             transition: 'all var(--duration-fast) var(--ease-out)',
           }}
         >
@@ -646,7 +646,6 @@ function SwipeableWorkoutCard({
           cursor: 'pointer',
           transition: 'transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)',
           transform: `translateX(${swipeX}px)`,
-          borderLeft: `4px solid ${volumeProgress > 0.7 ? 'var(--color-brand-500)' : volumeProgress > 0.4 ? 'var(--color-accent-500)' : 'var(--color-border-primary)'}`,
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-4)' }}>
@@ -665,7 +664,7 @@ function SwipeableWorkoutCard({
                   color: 'var(--color-brand-600)',
                   background: 'var(--color-brand-100)',
                   padding: '2px var(--space-2)',
-                  borderRadius: 'var(--radius-pill)',
+                  borderRadius: 'var(--radius-full)',
                 }}>
                   <CheckCircle size={10} aria-hidden="true" style={{ marginRight: '2px', verticalAlign: 'middle' }} />
                   Ultimo
@@ -674,19 +673,21 @@ function SwipeableWorkoutCard({
             </div>
             
             {/* Volume Progress Bar */}
-            <div style={{ 
-              height: '6px', 
-              background: 'var(--color-bg-tertiary)', 
-              borderRadius: 'var(--radius-full)', 
+            <div style={{
+              height: '6px',
+              background: 'var(--color-bg-tertiary)',
+              borderRadius: 'var(--radius-full)',
               overflow: 'hidden',
               marginBottom: 'var(--space-2)',
             }}>
               <div style={{
-                width: `${volumeProgress * 100}%`,
+                width: '100%',
                 height: '100%',
                 background: volumeProgress > 0.7 ? 'var(--color-brand-500)' : volumeProgress > 0.4 ? 'var(--color-accent-500)' : 'var(--color-border-primary)',
                 borderRadius: 'var(--radius-full)',
-                transition: 'width var(--duration-slow) var(--ease-out)',
+                transform: `scaleX(${volumeProgress})`,
+                transformOrigin: 'left',
+                transition: 'transform var(--duration-slow) var(--ease-out)',
               }} />
             </div>
             

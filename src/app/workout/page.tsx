@@ -9,7 +9,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
-import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, Search } from 'lucide-react';
+import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search } from 'lucide-react';
 
 interface Set {
   id: string;
@@ -163,27 +163,6 @@ function WorkoutDetailContent() {
     });
   };
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    e.dataTransfer.setData('text/plain', index.toString());
-    (e.currentTarget as HTMLElement).style.opacity = '0.5';
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    (e.currentTarget as HTMLElement).style.opacity = '1';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, toIndex: number) => {
-    e.preventDefault();
-    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-    if (fromIndex !== toIndex) {
-      reorderExercises(fromIndex, toIndex);
-    }
-  };
-
   const filteredExercises = COMMON_EXERCISES.filter((ex) => {
     const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || ex.category === selectedCategory;
@@ -281,15 +260,14 @@ function WorkoutDetailContent() {
               key={exercise.id}
               exercise={exercise}
               index={index}
+              exerciseCount={workout.exercises.length}
               onUpdate={(updates) => updateExercise({ ...exercise, ...updates })}
               onDelete={() => deleteExercise(exercise.id)}
               onAddSet={() => addSet(exercise.id)}
               onUpdateSet={(setId, updates) => updateSet(exercise.id, setId, updates)}
               onDeleteSet={(setId) => deleteSet(exercise.id, setId)}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, index)}
+              onMoveUp={() => reorderExercises(index, index - 1)}
+              onMoveDown={() => reorderExercises(index, index + 1)}
             />
           ))}
         </div>
@@ -373,41 +351,42 @@ function WorkoutDetailContent() {
 function ExerciseCard({
   exercise,
   index,
+  exerciseCount,
   onUpdate,
   onDelete,
   onAddSet,
   onUpdateSet,
   onDeleteSet,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
+  onMoveUp,
+  onMoveDown,
 }: {
   exercise: DetailedExercise;
   index: number;
+  exerciseCount: number;
   onUpdate: (updates: Partial<DetailedExercise>) => void;
   onDelete: () => void;
   onAddSet: () => void;
   onUpdateSet: (setId: string, updates: Partial<Set>) => void;
   onDeleteSet: (setId: string) => void;
-  onDragStart: (e: React.DragEvent, index: number) => void;
-  onDragEnd: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const exerciseVolume = calculateVolume(exercise.sets);
   const completedSets = exercise.sets.filter((s) => s.completed).length;
 
   return (
-    <Card variant="default" padding="none" draggable onDragStart={(e) => onDragStart(e, index)} onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop}>
+    <Card variant="default" padding="none">
       <CardHeader
         title={exercise.exercise.name}
         subtitle={`${completedSets}/${exercise.sets.length} serie • ${exerciseVolume.toLocaleString()} kg volume`}
         action={
           <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-            <Button variant="ghost" size="sm" onClick={() => onUpdate({ sets: [...exercise.sets, { id: generateId(), reps: 10, weight: 0, completed: false }] })} leftIcon={<Plus size={14} />}>
-              Serie
+            <Button variant="ghost" size="sm" onClick={onMoveUp} disabled={index === 0} aria-label="Sposta esercizio su">
+              <ArrowUp size={16} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onMoveDown} disabled={index === exerciseCount - 1} aria-label="Sposta esercizio giù">
+              <ArrowDown size={16} />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Comprimi esercizio' : 'Espandi esercizio'}>
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -459,6 +438,7 @@ function SetRow({ set, setNumber, onUpdate, onDelete }: { set: Set; setNumber: n
       <span style={{ fontWeight: 'var(--font-medium)', minWidth: '40px' }}>Serie {setNumber}</span>
       <Input
         type="number"
+        inputMode="numeric"
         placeholder="Rip"
         value={set.reps}
         onChange={(e) => onUpdate({ reps: parseInt(e.target.value) || 0 })}
@@ -469,6 +449,7 @@ function SetRow({ set, setNumber, onUpdate, onDelete }: { set: Set; setNumber: n
       <span style={{ color: 'var(--color-text-tertiary)' }}>×</span>
       <Input
         type="number"
+        inputMode="decimal"
         placeholder="Peso"
         value={set.weight}
         onChange={(e) => onUpdate({ weight: parseFloat(e.target.value) || 0 })}
@@ -512,6 +493,7 @@ function ExerciseEditor({ exercise, onSave, onClose }: { exercise: DetailedExerc
             <span style={{ fontWeight: 'var(--font-medium)', minWidth: '50px' }}>Serie {index + 1}</span>
             <Input
               type="number"
+              inputMode="numeric"
               placeholder="Rip"
               value={set.reps}
               onChange={(e) => handleSetChange(set.id, 'reps', parseInt(e.target.value) || 0)}
@@ -521,6 +503,7 @@ function ExerciseEditor({ exercise, onSave, onClose }: { exercise: DetailedExerc
             <span>×</span>
             <Input
               type="number"
+              inputMode="decimal"
               placeholder="Peso (kg)"
               value={set.weight}
               onChange={(e) => handleSetChange(set.id, 'weight', parseFloat(e.target.value) || 0)}

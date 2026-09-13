@@ -22,7 +22,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  animation: scaleIn var(--duration-normal) var(--ease-spring);
+  animation: scaleIn var(--duration-normal) var(--ease-out);
 }
 
 @keyframes scaleIn {

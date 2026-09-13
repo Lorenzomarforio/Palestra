@@ -103,7 +103,7 @@ export function Progress({
         <div
           className="progress__indicator"
           style={{
-            width: `${percentage}%`,
+            '--progress-scale': percentage / 100,
             backgroundColor: `var(${colorVar})`,
           } as React.CSSProperties}
         />
