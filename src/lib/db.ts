@@ -2,9 +2,19 @@ import Database from '@tauri-apps/plugin-sql';
 
 let dbPromise: Promise<Database> | null = null;
 
+const waitForTauri = async (timeoutMs = 5000): Promise<void> => {
+  const start = Date.now();
+  while (typeof window === 'undefined' || !('__TAURI_INTERNALS__' in window)) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error('Tauri runtime not available (timed out waiting for __TAURI_INTERNALS__)');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+};
+
 const getDb = () => {
   if (!dbPromise) {
-    dbPromise = Database.load('sqlite:workouts.db');
+    dbPromise = waitForTauri().then(() => Database.load('sqlite:workouts.db'));
   }
   return dbPromise;
 };
