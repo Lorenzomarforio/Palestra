@@ -46,10 +46,8 @@ export function Card({
     .filter(Boolean)
     .join(' ');
 
-  const Component = onClick ? 'button' : 'div';
-
   return (
-    <Component
+    <div
       className={classNames}
       style={style}
       onClick={onClick}
@@ -67,7 +65,7 @@ export function Card({
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }} : undefined}
     >
       {children}
-    </Component>
+    </div>
   );
 }
 
