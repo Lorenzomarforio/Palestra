@@ -29,6 +29,10 @@ export function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  const closeOnEscapeRef = useRef(closeOnEscape);
+  onCloseRef.current = onClose;
+  closeOnEscapeRef.current = closeOnEscape;
 
   useEffect(() => {
     if (isOpen) {
@@ -37,8 +41,8 @@ export function Modal({
       modalRef.current?.focus();
 
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && closeOnEscape) {
-          onClose();
+        if (e.key === 'Escape' && closeOnEscapeRef.current) {
+          onCloseRef.current();
         }
         if (e.key === 'Tab') {
           trapFocus(e);
@@ -52,7 +56,7 @@ export function Modal({
         previousActiveElement.current?.focus();
       };
     }
-  }, [isOpen, closeOnEscape, onClose]);
+  }, [isOpen]);
 
   const trapFocus = (e: KeyboardEvent) => {
     if (!modalRef.current) return;
