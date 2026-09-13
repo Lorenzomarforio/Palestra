@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { getWorkout, putWorkout, deleteWorkout } from '@/lib/db';
+import { workoutStore } from '@/data/workoutStore';
+import { generateId } from '@/domain/ids';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -28,8 +29,6 @@ interface DetailedExercise extends WorkoutExercise {
 interface DetailedWorkout extends Workout {
   exercises: DetailedExercise[];
 }
-
-const generateId = () => Math.random().toString(36).slice(2, 11);
 
 export default function WorkoutDetail() {
   return (
@@ -62,7 +61,7 @@ function WorkoutDetailContent() {
 
   const loadWorkout = async () => {
     try {
-      const workoutData = await getWorkout<DetailedWorkout>(workoutId);
+      const workoutData = await workoutStore.get<DetailedWorkout>(workoutId);
       if (workoutData) {
         setWorkout(workoutData);
       } else {
@@ -78,7 +77,7 @@ function WorkoutDetailContent() {
 
   const saveWorkout = async (updatedWorkout: DetailedWorkout) => {
     try {
-      await putWorkout(updatedWorkout);
+      await workoutStore.put(updatedWorkout);
       setWorkout(updatedWorkout);
     } catch (error) {
       console.error('Save workout error:', error);
@@ -97,7 +96,7 @@ function WorkoutDetailContent() {
   const handleDeleteWorkout = async () => {
     if (!workout) return;
     try {
-      await deleteWorkout(workout.id);
+      await workoutStore.delete(workout.id);
       router.push('/');
     } catch (error) {
       console.error('Delete workout error:', error);

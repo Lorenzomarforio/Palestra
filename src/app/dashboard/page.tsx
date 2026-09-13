@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { listWorkouts } from '@/lib/db';
+import { workoutStore } from '@/data/workoutStore';
+import { getWorkoutStats } from '@/domain/workout';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -26,7 +27,7 @@ export default function Dashboard() {
 
   const loadWorkouts = async () => {
     try {
-      const rows = await listWorkouts<Workout>();
+      const rows = await workoutStore.list<Workout>();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
@@ -329,14 +330,7 @@ export default function Dashboard() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {filteredWorkouts.slice(0, 10).map((workout) => {
-                let volume = 0;
-                let sets = 0;
-                workout.exercises.forEach((ex) => {
-                  ex.sets.forEach((set) => {
-                    volume += set.weight * set.reps;
-                    sets++;
-                  });
-                });
+                const { totalVolume: volume, totalSets: sets } = getWorkoutStats(workout);
                 return (
                   <div
                     key={workout.id}

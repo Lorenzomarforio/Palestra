@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { listWorkouts, putWorkout, deleteWorkout as deleteWorkoutFromDb } from '@/lib/db';
+import { workoutStore } from '@/data/workoutStore';
+import { generateId } from '@/domain/ids';
+import { today } from '@/domain/dates';
+import { getWorkoutStats, calculateStreak, groupWorkoutsByWeek } from '@/domain/workout';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
@@ -36,8 +39,6 @@ interface Workout {
   exercises: { sets: { weight: number; reps: number }[] }[];
 }
 
-const generateId = () => Math.random().toString(36).slice(2, 11);
-
 const WORKOUT_TEMPLATES = [
   {
     id: 'push',
@@ -61,77 +62,6 @@ const WORKOUT_TEMPLATES = [
   },
 ];
 
-const getWorkoutStats = (workout: Workout) => {
-  let totalVolume = 0;
-  let totalSets = 0;
-  workout.exercises.forEach((ex) => {
-    ex.sets.forEach((set) => {
-      totalVolume += set.weight * set.reps;
-      totalSets++;
-    });
-  });
-  return { totalVolume, totalSets, exerciseCount: workout.exercises.length };
-};
-
-const calculateStreak = (workouts: Workout[]): number => {
-  if (workouts.length === 0) return 0;
-  
-  const sortedDates = [...workouts]
-    .map(w => w.date)
-    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-  
-  const uniqueDates = [...new Set(sortedDates)];
-  let streak = 0;
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  
-  let checkDate = uniqueDates[0] === today || uniqueDates[0] === yesterday ? uniqueDates[0] : null;
-  
-  if (!checkDate) return 0;
-  
-  for (let i = 0; i < uniqueDates.length; i++) {
-    const expectedDate = new Date(checkDate);
-    expectedDate.setDate(expectedDate.getDate() - i);
-    const expectedStr = expectedDate.toISOString().split('T')[0];
-    
-    if (uniqueDates[i] === expectedStr) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  
-  return streak;
-};
-
-const groupWorkoutsByWeek = (workouts: Workout[]) => {
-  const groups: Record<string, Workout[]> = {};
-  
-  workouts.forEach(workout => {
-    const date = new Date(workout.date);
-    const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay());
-    const weekKey = weekStart.toISOString().split('T')[0];
-    
-    if (!groups[weekKey]) groups[weekKey] = [];
-    groups[weekKey].push(workout);
-  });
-  
-  return Object.entries(groups)
-    .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-    .map(([weekStart, workouts]) => ({
-      weekStart,
-      weekLabel: new Date(weekStart).toLocaleDateString('it-IT', { 
-        day: 'numeric', 
-        month: 'short' 
-      }) + ' - ' + new Date(new Date(weekStart).getTime() + 6 * 86400000).toLocaleDateString('it-IT', { 
-        day: 'numeric', 
-        month: 'short' 
-      }),
-      workouts: workouts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    }));
-};
-
 export default function Home() {
   const router = useRouter();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -146,7 +76,7 @@ export default function Home() {
 
   const loadWorkouts = useCallback(async () => {
     try {
-      const rows = await listWorkouts<Workout>();
+      const rows = await workoutStore.list<Workout>();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
@@ -189,7 +119,7 @@ export default function Home() {
       const workout: Workout = {
         id: generateId(),
         name: workoutName,
-        date: new Date().toISOString().split('T')[0],
+        date: today(),
         exercises: templateExercises
           ? templateExercises.map((exName, index) => ({
               name: exName,
@@ -198,7 +128,7 @@ export default function Home() {
             }))
           : [],
       };
-      await putWorkout(workout);
+      await workoutStore.put(workout);
       setWorkouts([workout, ...workouts]);
       setShowModal(false);
       setShowTemplateModal(false);
@@ -222,9 +152,9 @@ export default function Home() {
       const newWorkout: Workout = {
         ...workout,
         id: generateId(),
-        date: new Date().toISOString().split('T')[0],
+        date: today(),
       };
-      await putWorkout(newWorkout);
+      await workoutStore.put(newWorkout);
       setWorkouts([newWorkout, ...workouts]);
       router.push(`/workout?id=${newWorkout.id}`);
     } catch (error) {
@@ -236,7 +166,7 @@ export default function Home() {
 
   const deleteWorkout = async (id: string) => {
     try {
-      await deleteWorkoutFromDb(id);
+      await workoutStore.delete(id);
       setWorkouts(workouts.filter((w) => w.id !== id));
     } catch (error) {
       console.error('Delete workout error:', error);
