@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { getWorkout, putWorkout } from '@/lib/db';
+import { getWorkout, putWorkout, deleteWorkout } from '@/lib/db';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
+import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
 import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search } from 'lucide-react';
@@ -49,6 +49,7 @@ function WorkoutDetailContent() {
   const [editingExercise, setEditingExercise] = useState<DetailedExercise | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!workoutId) {
@@ -80,6 +81,16 @@ function WorkoutDetailContent() {
       setWorkout(updatedWorkout);
     } catch (error) {
       console.error('Save workout error:', error);
+    }
+  };
+
+  const handleDeleteWorkout = async () => {
+    if (!workout) return;
+    try {
+      await deleteWorkout(workout.id);
+      router.push('/');
+    } catch (error) {
+      console.error('Delete workout error:', error);
     }
   };
 
@@ -210,6 +221,9 @@ function WorkoutDetailContent() {
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} leftIcon={<ArrowLeft size={16} />}>
             Indietro
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(true)} leftIcon={<Trash2 size={16} />}>
+            Elimina
           </Button>
         </div>
       </div>
@@ -344,6 +358,16 @@ function WorkoutDetailContent() {
           />
         </Modal>
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => { setShowDeleteConfirm(false); handleDeleteWorkout(); }}
+        title="Eliminare l'allenamento?"
+        message="L'allenamento e tutti i suoi esercizi verranno eliminati definitivamente."
+        confirmText="Elimina"
+        variant="danger"
+      />
     </div>
   );
 }
