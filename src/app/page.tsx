@@ -645,14 +645,33 @@ function SwipeableWorkoutCard({
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', flexShrink: 0 }}>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={(e) => { e.stopPropagation(); onOpen(); }}
               style={{ minWidth: '80px' }}
             >
               Apri
             </Button>
+            <div className="flex-row gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+                disabled={isDuplicating}
+                aria-label="Duplica allenamento"
+              >
+                <Copy size={16} aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                aria-label="Elimina allenamento"
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
