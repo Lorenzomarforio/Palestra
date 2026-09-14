@@ -38,7 +38,7 @@ export function Progress({
     .filter(Boolean)
     .join(' ');
 
-  const colorVar = `--color-${color}`;
+  const colorVar = `--color-${color}-500`;
 
   if (variant === 'circular' || variant === 'ring') {
     const strokeWidth = thickness || (size === 'sm' ? 4 : size === 'md' ? 6 : size === 'lg' ? 8 : 10);

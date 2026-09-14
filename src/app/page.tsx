@@ -12,6 +12,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Progress } from '@/components/ui/Progress';
 import {
   Dumbbell,
   Plus,
@@ -612,22 +613,13 @@ function SwipeableWorkoutCard({
             </div>
             
             {/* Volume Progress Bar */}
-            <div style={{
-              height: '6px',
-              background: 'var(--color-bg-tertiary)',
-              borderRadius: 'var(--radius-full)',
-              overflow: 'hidden',
-              marginBottom: 'var(--space-2)',
-            }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                background: volumeProgress > 0.7 ? 'var(--color-brand-500)' : volumeProgress > 0.4 ? 'var(--color-accent-500)' : 'var(--color-border-primary)',
-                borderRadius: 'var(--radius-full)',
-                transform: `scaleX(${volumeProgress})`,
-                transformOrigin: 'left',
-                transition: 'transform var(--duration-slow) var(--ease-out)',
-              }} />
+            <div style={{ marginBottom: 'var(--space-2)' }}>
+              <Progress
+                value={volumeProgress}
+                max={1}
+                color={volumeProgress > 0.7 ? 'brand' : 'accent'}
+                aria-label={`Volume allenamento: ${Math.round(volumeProgress * 100)}%`}
+              />
             </div>
             
             <div className="flex-row gap-4 flex-wrap text-muted" style={{ fontSize: 'var(--text-sm)' }}>
