@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { workoutStore } from '@/data/workoutStore';
 import { getWorkoutStats, formatDate, Workout } from '@/domain/workout';
+import { aggregateWorkoutStats } from '@/domain/stats';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -50,79 +51,7 @@ export default function Dashboard() {
     return workouts.filter((w) => new Date(w.date) >= cutoff);
   }, [workouts, timeRange]);
 
-  const stats = useMemo(() => {
-    let totalVolume = 0;
-    let totalWorkouts = filteredWorkouts.length;
-    let totalSets = 0;
-    let totalReps = 0;
-    const muscleGroupVolume: Record<string, number> = {};
-    const exerciseVolume: Record<string, { volume: number; count: number }> = {};
-    const weeklyData: Record<string, number> = {};
-    const dailyVolume: Record<string, number> = {};
-
-    filteredWorkouts.forEach((workout) => {
-      const workoutDate = new Date(workout.date);
-      const weekKey = `${workoutDate.getFullYear()}-W${String(Math.ceil(workoutDate.getDate() / 7)).padStart(2, '0')}`;
-      const dayKey = workoutDate.toISOString().split('T')[0];
-      
-      let workoutVolume = 0;
-      
-      workout.exercises.forEach((ex) => {
-        ex.sets.forEach((set) => {
-          const volume = set.weight * set.reps;
-          totalVolume += volume;
-          workoutVolume += volume;
-          totalSets++;
-          totalReps += set.reps;
-          
-          // Track by exercise
-          const exerciseName = ex.exercise.name;
-          if (!exerciseVolume[exerciseName]) {
-            exerciseVolume[exerciseName] = { volume: 0, count: 0 };
-          }
-          exerciseVolume[exerciseName].volume += volume;
-          exerciseVolume[exerciseName].count++;
-        });
-      });
-      
-      weeklyData[weekKey] = (weeklyData[weekKey] || 0) + workoutVolume;
-      dailyVolume[dayKey] = (dailyVolume[dayKey] || 0) + workoutVolume;
-    });
-
-    // Top exercises by volume
-    const topExercises = Object.entries(exerciseVolume)
-      .sort(([, a], [, b]) => b.volume - a.volume)
-      .slice(0, 5)
-      .map(([name, data]) => ({ name, volume: data.volume, count: data.count }));
-
-    // Weekly volume trend
-    const sortedWeeks = Object.entries(weeklyData)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([week, volume]) => ({ x: week, y: volume }));
-
-    // Muscle group distribution (simplified)
-    const muscleGroups = [
-      { label: 'Petto', value: Math.round(totalVolume * 0.25) },
-      { label: 'Schiena', value: Math.round(totalVolume * 0.22) },
-      { label: 'Gambe', value: Math.round(totalVolume * 0.28) },
-      { label: 'Spalle', value: Math.round(totalVolume * 0.12) },
-      { label: 'Braccia', value: Math.round(totalVolume * 0.13) },
-    ];
-
-    return {
-      totalVolume,
-      totalWorkouts,
-      totalSets,
-      totalReps,
-      avgVolumePerWorkout: totalWorkouts > 0 ? Math.round(totalVolume / totalWorkouts) : 0,
-      topExercises,
-      weeklyVolume: sortedWeeks,
-      muscleGroups,
-      dailyVolume: Object.entries(dailyVolume)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, volume]) => ({ x: date, y: volume })),
-    };
-  }, [filteredWorkouts]);
+  const stats = useMemo(() => aggregateWorkoutStats(filteredWorkouts), [filteredWorkouts]);
 
   if (loading) {
     return (
@@ -232,9 +161,9 @@ export default function Dashboard() {
         <Card variant="default" padding="lg">
           <CardHeader title="Distribuzione Gruppi Muscolari" />
           <CardContent>
-            {stats.muscleGroups.some((g) => g.value > 0) ? (
+            {stats.muscleGroupVolume.some((g) => g.value > 0) ? (
               <DonutChart
-                data={stats.muscleGroups.filter((g) => g.value > 0).map((g) => ({
+                data={stats.muscleGroupVolume.filter((g) => g.value > 0).map((g) => ({
                   label: g.label,
                   value: g.value,
                   color: g.label === 'Gambe' ? 'var(--color-brand-500)' :

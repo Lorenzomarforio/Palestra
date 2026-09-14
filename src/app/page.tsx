@@ -231,9 +231,17 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
           <ThemeToggle />
           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/dashboard')}
+              leftIcon={<BarChart2 size={16} />}
+            >
+              Dashboard
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowTemplateModal(true)}
               leftIcon={<Zap size={16} />}
             >
