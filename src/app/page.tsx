@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Progress } from '@/components/ui/Progress';
 import { dragStart, dragDelta } from '@/lib/gesture';
+import { useNotice } from '@/lib/notice';
 import {
   Dumbbell,
   Plus,
@@ -59,6 +60,7 @@ const WORKOUT_TEMPLATES = [
 
 export default function Home() {
   const router = useRouter();
+  const { showError } = useNotice();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -75,6 +77,7 @@ export default function Home() {
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
+      showError('Impossibile caricare gli allenamenti.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -135,6 +138,7 @@ export default function Home() {
       router.push(`/workout?id=${workout.id}`);
     } catch (error) {
       console.error('Create workout error:', error);
+      showError('Impossibile creare l\'allenamento.');
     }
   };
 
@@ -158,6 +162,7 @@ export default function Home() {
       router.push(`/workout?id=${newWorkout.id}`);
     } catch (error) {
       console.error('Duplicate workout error:', error);
+      showError('Impossibile duplicare l\'allenamento.');
     } finally {
       setDuplicatingId(null);
     }
@@ -169,6 +174,7 @@ export default function Home() {
       setWorkouts(workouts.filter((w) => w.id !== id));
     } catch (error) {
       console.error('Delete workout error:', error);
+      showError('Impossibile eliminare l\'allenamento.');
     }
   };
 
@@ -195,6 +201,13 @@ export default function Home() {
       onTouchMove={handlePullMove}
       onTouchEnd={handlePullEnd}
     >
+      {refreshing && (
+        <div className="flex-center gap-2" style={{ padding: 'var(--space-2)', color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
+          <Loader2 size={16} className="spin" aria-hidden="true" />
+          <span>Aggiornamento...</span>
+        </div>
+      )}
+
       {/* Header with Streak */}
       <header style={{ 
         display: 'flex', 

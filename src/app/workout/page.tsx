@@ -11,6 +11,7 @@ import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { SupplementTracker } from '@/components/ui/SupplementTracker';
 import { StatCard } from '@/components/charts/Charts';
+import { useNotice } from '@/lib/notice';
 import { Exercise, COMMON_EXERCISES } from '@/domain/exerciseCatalog';
 import { Workout, WorkoutExercise, calculateOneRepMax, calculateVolume } from '@/domain/workout';
 import type { Set } from '@/domain/workout';
@@ -29,6 +30,7 @@ export default function WorkoutDetail() {
 
 function WorkoutDetailContent() {
   const router = useRouter();
+  const { showError } = useNotice();
   const searchParams = useSearchParams();
   const workoutId = searchParams.get('id') ?? '';
 
@@ -58,6 +60,7 @@ function WorkoutDetailContent() {
       }
     } catch (error) {
       console.error('Load workout error:', error);
+      showError('Impossibile caricare l\'allenamento.');
       router.push('/');
     } finally {
       setLoading(false);
@@ -70,6 +73,7 @@ function WorkoutDetailContent() {
       setWorkout(updatedWorkout);
     } catch (error) {
       console.error('Save workout error:', error);
+      showError('Impossibile salvare le modifiche.');
     }
   };
 
@@ -89,6 +93,7 @@ function WorkoutDetailContent() {
       router.push('/');
     } catch (error) {
       console.error('Delete workout error:', error);
+      showError('Impossibile eliminare l\'allenamento.');
     }
   };
 

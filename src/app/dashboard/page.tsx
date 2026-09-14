@@ -10,9 +10,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LineChart, BarChart, DonutChart, StatCard } from '@/components/charts/Charts';
 import { ArrowLeft } from 'lucide-react';
+import { useNotice } from '@/lib/notice';
 
 export default function Dashboard() {
   const router = useRouter();
+  const { showError } = useNotice();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
@@ -27,6 +29,7 @@ export default function Dashboard() {
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
+      showError('Impossibile caricare gli allenamenti.');
     } finally {
       setLoading(false);
     }

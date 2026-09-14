@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/lib/theme'
+import { NoticeProvider } from '@/lib/notice'
 
 export const metadata: Metadata = {
   title: 'Palestra Progressi',
@@ -25,7 +26,9 @@ export default function RootLayout({
           Vai al contenuto principale
         </a>
         <ThemeProvider>
-          <main id="main-content">{children}</main>
+          <NoticeProvider>
+            <main id="main-content">{children}</main>
+          </NoticeProvider>
         </ThemeProvider>
       </body>
     </html>
