@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { workoutStore } from '@/data/workoutStore';
 import { generateId } from '@/domain/ids';
 import { today } from '@/domain/dates';
-import { getWorkoutStats, calculateStreak, groupWorkoutsByWeek } from '@/domain/workout';
+import { getWorkoutStats, calculateStreak, groupWorkoutsByWeek, formatDate, Workout } from '@/domain/workout';
+import { COMMON_EXERCISES } from '@/domain/exerciseCatalog';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { formatDate } from '@/types/workout';
 import {
   Dumbbell,
   Plus,
@@ -32,33 +32,26 @@ import {
   Loader2,
 } from 'lucide-react';
 
-interface Workout {
-  id: string;
-  name: string;
-  date: string;
-  exercises: { sets: { weight: number; reps: number }[] }[];
-}
-
 const WORKOUT_TEMPLATES = [
   {
     id: 'push',
     name: 'Push Day',
-    exercises: ['Panca Piana', 'Spinte Manubri', 'Croci Cav', 'Spinte Military', 'Alzate Laterali', 'Pushdown Tricipiti', 'Estensioni Tricipiti'],
+    exerciseIds: ['bench-press', 'dumbbell-press', 'cable-flyes', 'ohp', 'lateral-raise', 'tricep-pushdown', 'skull-crushers'],
   },
   {
     id: 'pull',
     name: 'Pull Day',
-    exercises: ['Trazioni', 'Rematore Bilanciere', 'Lat Machine', 'Face Pull', 'Curl Bilanciere', 'Curl Martello', 'Scrollate'],
+    exerciseIds: ['pull-ups', 'bent-over-row', 'lat-pulldown', 'face-pulls', 'barbell-curl', 'hammer-curl', 'shrugs'],
   },
   {
     id: 'legs',
     name: 'Leg Day',
-    exercises: ['Squat', 'Leg Press', 'Affondi', 'Leg Extension', 'Leg Curl', 'Calf Raise', 'Hip Thrust'],
+    exerciseIds: ['squat', 'leg-press', 'lunges', 'leg-extension', 'leg-curl', 'calf-raise', 'hip-thrust'],
   },
   {
     id: 'fullbody',
     name: 'Full Body',
-    exercises: ['Squat', 'Panca Piana', 'Rematore', 'Spinte Military', 'Stacco Rumeno', 'Face Pull', 'Plank'],
+    exerciseIds: ['squat', 'bench-press', 'bent-over-row', 'ohp', 'romanian-deadlift', 'face-pulls', 'plank'],
   },
 ];
 
@@ -76,7 +69,7 @@ export default function Home() {
 
   const loadWorkouts = useCallback(async () => {
     try {
-      const rows = await workoutStore.list<Workout>();
+      const rows = await workoutStore.list();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
@@ -111,22 +104,26 @@ export default function Home() {
     pullStartRef.current = null;
   };
 
-  const createWorkout = async (name?: string, templateExercises?: string[]) => {
+  const createWorkout = async (name?: string, templateExerciseIds?: string[]) => {
     const workoutName = name || newWorkoutName.trim();
     if (!workoutName) return;
-    
+
     try {
       const workout: Workout = {
         id: generateId(),
         name: workoutName,
         date: today(),
-        exercises: templateExercises
-          ? templateExercises.map((exName, index) => ({
-              name: exName,
-              sets: [{ weight: 0, reps: 10 }],
-              order: index,
-            }))
-          : [],
+        completed: false,
+        exercises: (templateExerciseIds ?? [])
+          .map((exId) => COMMON_EXERCISES.find((ex) => ex.id === exId))
+          .filter((exercise): exercise is (typeof COMMON_EXERCISES)[number] => exercise !== undefined)
+          .map((exercise, index) => ({
+            id: generateId(),
+            exerciseId: exercise.id,
+            exercise,
+            sets: [{ id: generateId(), reps: 10, weight: 0, completed: false }],
+            order: index,
+          })),
       };
       await workoutStore.put(workout);
       setWorkouts([workout, ...workouts]);
@@ -140,7 +137,7 @@ export default function Home() {
   };
 
   const createFromTemplate = (template: typeof WORKOUT_TEMPLATES[0]) => {
-    createWorkout(template.name, template.exercises);
+    createWorkout(template.name, template.exerciseIds);
   };
 
   const duplicateWorkout = async (id: string) => {
@@ -438,7 +435,11 @@ export default function Home() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h4 style={{ fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-1)' }}>{template.name}</h4>
                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)' }}>
-                  {template.exercises.length} esercizi • {template.exercises.slice(0, 3).join(', ')}{template.exercises.length > 3 ? '...' : ''}
+                  {template.exerciseIds.length} esercizi • {template.exerciseIds
+                    .slice(0, 3)
+                    .map((exId) => COMMON_EXERCISES.find((ex) => ex.id === exId)?.name ?? exId)
+                    .join(', ')}
+                  {template.exerciseIds.length > 3 ? '...' : ''}
                 </p>
               </div>
               <ArrowRight size={20} color="var(--color-text-tertiary)" aria-hidden="true" />

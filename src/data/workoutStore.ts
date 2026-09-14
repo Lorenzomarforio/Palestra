@@ -1,2 +1,2 @@
-export type { WorkoutStore, WorkoutRecord } from './types';
+export type { WorkoutStore } from './types';
 export { sqliteWorkoutStore as workoutStore } from './sqliteWorkoutStore';

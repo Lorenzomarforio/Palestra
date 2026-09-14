@@ -2,19 +2,11 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { workoutStore } from '@/data/workoutStore';
-import { getWorkoutStats } from '@/domain/workout';
+import { getWorkoutStats, formatDate, Workout } from '@/domain/workout';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LineChart, BarChart, DonutChart, StatCard } from '@/components/charts/Charts';
-import { formatDate } from '@/types/workout';
-
-interface Workout {
-  id: string;
-  name: string;
-  date: string;
-  exercises: { name: string; sets: { weight: number; reps: number }[] }[];
-}
 
 export default function Dashboard() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -27,7 +19,7 @@ export default function Dashboard() {
 
   const loadWorkouts = async () => {
     try {
-      const rows = await workoutStore.list<Workout>();
+      const rows = await workoutStore.list();
       setWorkouts(rows.reverse());
     } catch (error) {
       console.error('Load workouts error:', error);
@@ -84,11 +76,12 @@ export default function Dashboard() {
           totalReps += set.reps;
           
           // Track by exercise
-          if (!exerciseVolume[ex.name]) {
-            exerciseVolume[ex.name] = { volume: 0, count: 0 };
+          const exerciseName = ex.exercise.name;
+          if (!exerciseVolume[exerciseName]) {
+            exerciseVolume[exerciseName] = { volume: 0, count: 0 };
           }
-          exerciseVolume[ex.name].volume += volume;
-          exerciseVolume[ex.name].count++;
+          exerciseVolume[exerciseName].volume += volume;
+          exerciseVolume[exerciseName].count++;
         });
       });
       

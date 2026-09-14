@@ -10,25 +10,13 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { SupplementTracker } from '@/components/ui/SupplementTracker';
-import { Exercise, Workout, WorkoutExercise, COMMON_EXERCISES, calculateOneRepMax, calculateVolume, formatWeight } from '@/types/workout';
+import { Exercise, COMMON_EXERCISES } from '@/domain/exerciseCatalog';
+import { Workout, WorkoutExercise, calculateOneRepMax, calculateVolume } from '@/domain/workout';
+import type { Set } from '@/domain/workout';
 import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search } from 'lucide-react';
 
-interface Set {
-  id: string;
-  reps: number;
-  weight: number;
-  rpe?: number;
-  completed: boolean;
-  restTime?: number;
-}
-
-interface DetailedExercise extends WorkoutExercise {
-  sets: Set[];
-}
-
-interface DetailedWorkout extends Workout {
-  exercises: DetailedExercise[];
-}
+type DetailedExercise = WorkoutExercise;
+type DetailedWorkout = Workout;
 
 export default function WorkoutDetail() {
   return (
@@ -61,7 +49,7 @@ function WorkoutDetailContent() {
 
   const loadWorkout = async () => {
     try {
-      const workoutData = await workoutStore.get<DetailedWorkout>(workoutId);
+      const workoutData = await workoutStore.get(workoutId);
       if (workoutData) {
         setWorkout(workoutData);
       } else {

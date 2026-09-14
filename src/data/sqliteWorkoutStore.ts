@@ -1,5 +1,6 @@
 import Database from '@tauri-apps/plugin-sql';
-import { WorkoutStore, WorkoutRecord } from './types';
+import { WorkoutStore } from './types';
+import { Workout } from '@/domain/workout';
 
 let dbPromise: Promise<Database> | null = null;
 
@@ -21,19 +22,19 @@ const getDb = () => {
 };
 
 export const sqliteWorkoutStore: WorkoutStore = {
-  async list<T extends WorkoutRecord>(): Promise<T[]> {
+  async list(): Promise<Workout[]> {
     const db = await getDb();
     const rows = await db.select<{ data: string }[]>('SELECT data FROM workouts ORDER BY date ASC');
-    return rows.map((row) => JSON.parse(row.data) as T);
+    return rows.map((row) => JSON.parse(row.data) as Workout);
   },
 
-  async get<T extends WorkoutRecord>(id: string): Promise<T | undefined> {
+  async get(id: string): Promise<Workout | undefined> {
     const db = await getDb();
     const rows = await db.select<{ data: string }[]>('SELECT data FROM workouts WHERE id = $1', [id]);
-    return rows[0] ? (JSON.parse(rows[0].data) as T) : undefined;
+    return rows[0] ? (JSON.parse(rows[0].data) as Workout) : undefined;
   },
 
-  async put<T extends WorkoutRecord>(workout: T): Promise<void> {
+  async put(workout: Workout): Promise<void> {
     const db = await getDb();
     await db.execute(
       'INSERT INTO workouts (id, date, data) VALUES ($1, $2, $3) ON CONFLICT(id) DO UPDATE SET date = $2, data = $3',
