@@ -14,7 +14,7 @@ import { StatCard } from '@/components/charts/Charts';
 import { Exercise, COMMON_EXERCISES } from '@/domain/exerciseCatalog';
 import { Workout, WorkoutExercise, calculateOneRepMax, calculateVolume } from '@/domain/workout';
 import type { Set } from '@/domain/workout';
-import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search, Pencil } from 'lucide-react';
 
 type DetailedExercise = WorkoutExercise;
 type DetailedWorkout = Workout;
@@ -270,6 +270,7 @@ function WorkoutDetailContent() {
               onDeleteSet={(setId) => deleteSet(exercise.id, setId)}
               onMoveUp={() => reorderExercises(index, index - 1)}
               onMoveDown={() => reorderExercises(index, index + 1)}
+              onEdit={() => setEditingExercise(exercise)}
             />
           ))}
         </div>
@@ -371,6 +372,7 @@ function ExerciseCard({
   onDeleteSet,
   onMoveUp,
   onMoveDown,
+  onEdit,
 }: {
   exercise: DetailedExercise;
   index: number;
@@ -382,6 +384,7 @@ function ExerciseCard({
   onDeleteSet: (setId: string) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onEdit: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const exerciseVolume = calculateVolume(exercise.sets);
@@ -402,6 +405,9 @@ function ExerciseCard({
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Comprimi esercizio' : 'Espandi esercizio'}>
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Modifica esercizio">
+              <Pencil size={16} />
             </Button>
             <Button variant="ghost" size="sm" onClick={onDelete} aria-label="Elimina esercizio">
               <Trash2 size={16} />
