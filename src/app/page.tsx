@@ -13,6 +13,7 @@ import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Progress } from '@/components/ui/Progress';
+import { dragStart, dragDelta } from '@/lib/gesture';
 import {
   Dumbbell,
   Plus,
@@ -86,13 +87,13 @@ export default function Home() {
 
   const handlePullRefresh = (e: React.TouchEvent) => {
     if (window.scrollY === 0) {
-      pullStartRef.current = e.touches[0].clientY;
+      pullStartRef.current = dragStart(e, 'y');
     }
   };
 
   const handlePullMove = (e: React.TouchEvent) => {
     if (pullStartRef.current !== null && window.scrollY === 0) {
-      const pullDistance = e.touches[0].clientY - pullStartRef.current;
+      const pullDistance = dragDelta(e, pullStartRef.current, 'y');
       if (pullDistance > 80) {
         setRefreshing(true);
         loadWorkouts();
@@ -500,12 +501,12 @@ function SwipeableWorkoutCard({
   const startXRef = useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    startXRef.current = e.touches[0].clientX;
+    startXRef.current = dragStart(e, 'x');
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (startXRef.current === null) return;
-    const deltaX = e.touches[0].clientX - startXRef.current;
+    const deltaX = dragDelta(e, startXRef.current, 'x');
     const absDeltaX = Math.abs(deltaX);
     
     if (absDeltaX > 10) {
