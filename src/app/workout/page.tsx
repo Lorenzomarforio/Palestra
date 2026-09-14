@@ -10,6 +10,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { SupplementTracker } from '@/components/ui/SupplementTracker';
+import { StatCard } from '@/components/charts/Charts';
 import { Exercise, COMMON_EXERCISES } from '@/domain/exerciseCatalog';
 import { Workout, WorkoutExercise, calculateOneRepMax, calculateVolume } from '@/domain/workout';
 import type { Set } from '@/domain/workout';
@@ -211,11 +212,11 @@ function WorkoutDetailContent() {
           <h1 style={{ fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', marginBottom: 'var(--space-1)' }}>
             {workout.name}
           </h1>
-          <p style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="text-muted">
             {new Date(workout.date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div className="flex-row gap-2">
           <Button variant="ghost" size="sm" onClick={() => router.push('/')} leftIcon={<ArrowLeft size={16} />}>
             Indietro
           </Button>
@@ -232,24 +233,9 @@ function WorkoutDetailContent() {
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
-        <Card variant="default" padding="md">
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
-            {totalVolume.toLocaleString()}
-          </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Volume Totale (kg)</div>
-        </Card>
-        <Card variant="default" padding="md">
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
-            {completedSets}/{totalSets}
-          </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Serie Completate</div>
-        </Card>
-        <Card variant="default" padding="md">
-          <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)', color: 'var(--color-brand-600)' }}>
-            {workout.exercises.length}
-          </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)' }}>Esercizi</div>
-        </Card>
+        <StatCard label="Volume Totale (kg)" value={totalVolume.toLocaleString()} color="brand" />
+        <StatCard label="Serie Completate" value={`${completedSets}/${totalSets}`} color="brand" />
+        <StatCard label="Esercizi" value={workout.exercises.length} color="brand" />
       </div>
 
       {/* Exercise List */}
@@ -270,7 +256,7 @@ function WorkoutDetailContent() {
           </Button>
         </Card>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div className="flex-col gap-3">
           {workout.exercises.map((exercise, index) => (
             <ExerciseCard
               key={exercise.id}
@@ -337,7 +323,7 @@ function WorkoutDetailContent() {
                       ))}
                     </div>
                   </div>
-                  <span style={{ color: 'var(--color-text-tertiary)' }}>+</span>
+                  <span className="text-muted">+</span>
                 </div>
               </Card>
             ))}
@@ -407,7 +393,7 @@ function ExerciseCard({
         title={exercise.exercise.name}
         subtitle={`${completedSets}/${exercise.sets.length} serie • ${exerciseVolume.toLocaleString()} kg volume`}
         action={
-          <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+          <div className="flex-row gap-1">
             <Button variant="ghost" size="sm" onClick={onMoveUp} disabled={index === 0} aria-label="Sposta esercizio su">
               <ArrowUp size={16} />
             </Button>
@@ -472,7 +458,7 @@ function SetRow({ set, setNumber, onUpdate, onDelete }: { set: Set; setNumber: n
         min={1}
         max={100}
       />
-      <span style={{ color: 'var(--color-text-tertiary)' }}>×</span>
+      <span className="text-muted">×</span>
       <Input
         type="number"
         inputMode="decimal"

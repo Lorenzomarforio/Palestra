@@ -228,9 +228,9 @@ export default function Home() {
             Traccia i tuoi allenamenti, monitora i progressi
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <div className="flex-row items-center gap-3">
           <ThemeToggle />
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <div className="flex-row gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -334,7 +334,7 @@ export default function Home() {
         /* Workout List Grouped by Week */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           {groupedWorkouts.map(({ weekStart, weekLabel, workouts: weekWorkouts }) => (
-            <div key={weekStart} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div key={weekStart} className="flex-col gap-3">
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -418,7 +418,7 @@ export default function Home() {
         title="Scegli un Template"
         size="md"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div className="flex-col gap-3">
           {WORKOUT_TEMPLATES.map((template) => (
             <Card
               key={template.id}
@@ -630,12 +630,12 @@ function SwipeableWorkoutCard({
               }} />
             </div>
             
-            <div style={{ display: 'flex', gap: 'var(--space-4)', fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)', flexWrap: 'wrap' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+            <div className="flex-row gap-4 flex-wrap text-muted" style={{ fontSize: 'var(--text-sm)' }}>
+              <span className="flex-row items-center gap-1">
                 <Dumbbell size={14} aria-hidden="true" />
                 {stats.exerciseCount} esercizi
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+              <span className="flex-row items-center gap-1">
                 <RotateCcw size={14} aria-hidden="true" />
                 {stats.totalSets} serie
               </span>

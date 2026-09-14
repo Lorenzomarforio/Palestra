@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { workoutStore } from '@/data/workoutStore';
 import { getWorkoutStats, formatDate, Workout } from '@/domain/workout';
 import { aggregateWorkoutStats } from '@/domain/stats';
@@ -8,8 +9,10 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LineChart, BarChart, DonutChart, StatCard } from '@/components/charts/Charts';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
@@ -90,14 +93,17 @@ export default function Dashboard() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
+          <Button variant="ghost" size="sm" onClick={() => router.push('/')} leftIcon={<ArrowLeft size={16} />} style={{ marginBottom: 'var(--space-2)' }}>
+            Indietro
+          </Button>
           <h1 style={{ fontSize: 'var(--text-3xl)', fontWeight: 'var(--font-bold)', marginBottom: 'var(--space-1)' }}>
             Dashboard
           </h1>
-          <p style={{ color: 'var(--color-text-tertiary)' }}>
+          <p className="text-muted">
             Panoramica dei tuoi progressi
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div className="flex-row gap-2">
           {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
             <Button
               key={range}
@@ -150,7 +156,7 @@ export default function Dashboard() {
                 showPoints
               />
             ) : (
-              <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
+              <div className="empty-state">
                 Nessun dato per il periodo selezionato
               </div>
             )}
@@ -178,7 +184,7 @@ export default function Dashboard() {
                 strokeWidth={24}
               />
             ) : (
-              <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
+              <div className="empty-state">
                 Nessun dato per il periodo selezionato
               </div>
             )}
@@ -204,7 +210,7 @@ export default function Dashboard() {
                 showValues
               />
             ) : (
-              <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
+              <div className="empty-state">
                 Nessun esercizio registrato
               </div>
             )}
@@ -226,7 +232,7 @@ export default function Dashboard() {
                 showValues={false}
               />
             ) : (
-              <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
+              <div className="empty-state">
                 Nessun dato per il periodo selezionato
               </div>
             )}
@@ -246,11 +252,11 @@ export default function Dashboard() {
         />
         <CardContent>
           {filteredWorkouts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-tertiary)' }}>
+            <div className="empty-state">
               Nessun allenamento nel periodo selezionato
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div className="flex-col gap-3">
               {filteredWorkouts.slice(0, 10).map((workout) => {
                 const { totalVolume: volume, totalSets: sets } = getWorkoutStats(workout);
                 return (
