@@ -100,6 +100,8 @@ export const COMMON_EXERCISES: Exercise[] = [
   { id: 'dips', name: 'Dip', category: 'bodyweight', muscleGroups: ['chest', 'triceps'], equipment: 'bodyweight' },
   { id: 'flyes', name: 'Croci con Manubri', category: 'strength', muscleGroups: ['chest'], equipment: 'dumbbell' },
   { id: 'cable-flyes', name: 'Croci ai Cavi', category: 'strength', muscleGroups: ['chest'], equipment: 'cable' },
+  { id: 'pressa-petto', name: 'Pressa Petto', category: 'strength', muscleGroups: ['chest', 'triceps'], equipment: 'machine' },
+  { id: 'pec-fly', name: 'Pec Fly', category: 'strength', muscleGroups: ['chest'], equipment: 'machine' },
 
   // Back
   { id: 'deadlift', name: 'Stacco da Terra', category: 'powerlifting', muscleGroups: ['back', 'glutes', 'hamstrings', 'lower_back'], equipment: 'barbell' },

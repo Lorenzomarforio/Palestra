@@ -122,7 +122,9 @@ export function groupWorkoutsByWeek(workouts: Workout[]) {
   workouts.forEach((workout) => {
     const date = new Date(workout.date);
     const weekStart = new Date(date);
-    weekStart.setDate(date.getDate() - date.getDay());
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    weekStart.setDate(date.getDate() + diff);
     const weekKey = isoDay(weekStart);
 
     if (!groups[weekKey]) groups[weekKey] = [];

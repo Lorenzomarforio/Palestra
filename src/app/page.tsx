@@ -68,6 +68,8 @@ export default function Home() {
   const [newWorkoutName, setNewWorkoutName] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [editDateId, setEditDateId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const pullStartRef = useRef<number | null>(null);
 
@@ -175,6 +177,20 @@ export default function Home() {
     } catch (error) {
       console.error('Delete workout error:', error);
       showError('Impossibile eliminare l\'allenamento.');
+    }
+  };
+
+  const saveWorkoutDate = async (id: string, newDate: string) => {
+    try {
+      const workout = workouts.find((w) => w.id === id);
+      if (!workout) return;
+      const updated: Workout = { ...workout, date: newDate };
+      await workoutStore.put(updated);
+      await loadWorkouts();
+      setEditDateId(null);
+    } catch (error) {
+      console.error('Edit workout date error:', error);
+      showError('Impossibile modificare la data dell\'allenamento.');
     }
   };
 
@@ -392,6 +408,7 @@ export default function Home() {
                       onOpen={() => router.push(`/workout?id=${workout.id}`)}
                       onDuplicate={() => duplicateWorkout(workout.id)}
                       onDelete={() => setDeleteConfirmId(workout.id)}
+                      onEditDate={() => { setEditDateValue(workout.date); setEditDateId(workout.id); }}
                       isDuplicating={duplicatingId === workout.id}
                     />
                   );
@@ -485,6 +502,30 @@ export default function Home() {
         cancelText="Annulla"
         variant="danger"
       />
+
+      {/* Edit Date Modal */}
+      <Modal
+        isOpen={!!editDateId}
+        onClose={() => setEditDateId(null)}
+        title="Modifica data allenamento"
+        size="sm"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <Input
+            label="Data"
+            type="date"
+            value={editDateValue}
+            onChange={(e) => setEditDateValue(e.target.value)}
+            autoFocus
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+            <Button variant="secondary" onClick={() => setEditDateId(null)}>Annulla</Button>
+            <Button onClick={() => saveWorkoutDate(editDateId!, editDateValue)} disabled={!editDateValue}>
+              Salva
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -497,6 +538,7 @@ function SwipeableWorkoutCard({
   onOpen,
   onDuplicate,
   onDelete,
+  onEditDate,
   isDuplicating,
 }: {
   workout: Workout;
@@ -506,6 +548,7 @@ function SwipeableWorkoutCard({
   onOpen: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onEditDate: () => void;
   isDuplicating: boolean;
 }) {
   const [swipeX, setSwipeX] = useState(0);
@@ -683,6 +726,14 @@ function SwipeableWorkoutCard({
                 aria-label="Elimina allenamento"
               >
                 <Trash2 size={16} aria-hidden="true" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); onEditDate(); }}
+                aria-label="Modifica data allenamento"
+              >
+                <Calendar size={16} aria-hidden="true" />
               </Button>
             </div>
           </div>
