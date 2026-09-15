@@ -38,7 +38,9 @@ export function Modal({
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       document.body.style.overflow = 'hidden';
-      modalRef.current?.focus();
+      if (modalRef.current && !modalRef.current.contains(document.activeElement)) {
+        modalRef.current.focus();
+      }
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape' && closeOnEscapeRef.current) {

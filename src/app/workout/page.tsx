@@ -5,7 +5,7 @@ import { workoutStore } from '@/data/workoutStore';
 import { generateId } from '@/domain/ids';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Input, Textarea } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
@@ -15,7 +15,7 @@ import { useNotice } from '@/lib/notice';
 import { Exercise, COMMON_EXERCISES } from '@/domain/exerciseCatalog';
 import { Workout, WorkoutExercise, calculateOneRepMax, calculateVolume } from '@/domain/workout';
 import type { Set } from '@/domain/workout';
-import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search, Pencil } from 'lucide-react';
+import { Plus, Trash2, X, ChevronDown, ChevronUp, ArrowLeft, ArrowUp, ArrowDown, Search, Pencil, StickyNote } from 'lucide-react';
 
 type DetailedExercise = WorkoutExercise;
 type DetailedWorkout = Workout;
@@ -392,6 +392,8 @@ function ExerciseCard({
   onEdit: () => void;
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [showNotes, setShowNotes] = useState(false);
+  const [notesDraft, setNotesDraft] = useState('');
   const exerciseVolume = calculateVolume(exercise.sets);
   const completedSets = exercise.sets.filter((s) => s.completed).length;
 
@@ -414,6 +416,17 @@ function ExerciseCard({
             <Button variant="ghost" size="sm" onClick={onEdit} aria-label="Modifica esercizio">
               <Pencil size={16} />
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setNotesDraft(exercise.notes ?? '');
+                setShowNotes(true);
+              }}
+              aria-label="Note esercizio"
+            >
+              <StickyNote size={16} />
+            </Button>
             <Button variant="ghost" size="sm" onClick={onDelete} aria-label="Elimina esercizio">
               <Trash2 size={16} />
             </Button>
@@ -423,6 +436,11 @@ function ExerciseCard({
       {expanded && (
         <CardContent>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {exercise.notes && (
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-2)' }}>
+                {exercise.notes}
+              </p>
+            )}
             {exercise.sets.map((set, setIndex) => (
               <SetRow
                 key={set.id}
@@ -438,6 +456,26 @@ function ExerciseCard({
           </div>
         </CardContent>
       )}
+      <Modal isOpen={showNotes} onClose={() => setShowNotes(false)} title="Note esercizio" size="sm">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <Textarea
+            value={notesDraft}
+            onChange={(e) => setNotesDraft(e.target.value)}
+            autoFocus
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+            <Button variant="secondary" onClick={() => setShowNotes(false)}>Annulla</Button>
+            <Button
+              onClick={() => {
+                onUpdate({ notes: notesDraft });
+                setShowNotes(false);
+              }}
+            >
+              Salva
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Card>
   );
 }
