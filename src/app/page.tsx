@@ -12,7 +12,6 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Modal, ConfirmDialog } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Progress } from '@/components/ui/Progress';
 import { dragStart, dragDelta } from '@/lib/gesture';
 import { useNotice } from '@/lib/notice';
 import {
@@ -395,15 +394,13 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
 {weekWorkouts.map((workout) => {
                   const stats = getWorkoutStats(workout);
-                  const volumeProgress = Math.min(stats.totalVolume / 50000, 1);
                   const isLast = workout.id === lastWorkout?.id;
-                  
+
                   return (
                     <SwipeableWorkoutCard
                       key={workout.id}
                       workout={workout}
                       stats={stats}
-                      volumeProgress={volumeProgress}
                       isLast={isLast}
                       onOpen={() => router.push(`/workout?id=${workout.id}`)}
                       onDuplicate={() => duplicateWorkout(workout.id)}
@@ -533,7 +530,6 @@ export default function Home() {
 function SwipeableWorkoutCard({
   workout,
   stats,
-  volumeProgress,
   isLast,
   onOpen,
   onDuplicate,
@@ -543,7 +539,6 @@ function SwipeableWorkoutCard({
 }: {
   workout: Workout;
   stats: ReturnType<typeof getWorkoutStats>;
-  volumeProgress: number;
   isLast: boolean;
   onOpen: () => void;
   onDuplicate: () => void;
@@ -668,17 +663,7 @@ function SwipeableWorkoutCard({
                 </span>
               )}
             </div>
-            
-            {/* Volume Progress Bar */}
-            <div style={{ marginBottom: 'var(--space-2)' }}>
-              <Progress
-                value={volumeProgress}
-                max={1}
-                color={volumeProgress > 0.7 ? 'brand' : 'accent'}
-                aria-label={`Volume allenamento: ${Math.round(volumeProgress * 100)}%`}
-              />
-            </div>
-            
+
             <div className="flex-row gap-4 flex-wrap text-muted" style={{ fontSize: 'var(--text-sm)' }}>
               <span className="flex-row items-center gap-1">
                 <Dumbbell size={14} aria-hidden="true" />
