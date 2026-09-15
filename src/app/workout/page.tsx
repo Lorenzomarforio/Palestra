@@ -433,14 +433,14 @@ function ExerciseCard({
           </div>
         }
       />
+      {exercise.notes && (
+        <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-2)' }}>
+          {exercise.notes}
+        </p>
+      )}
       {expanded && (
         <CardContent>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {exercise.notes && (
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-2)' }}>
-                {exercise.notes}
-              </p>
-            )}
             {exercise.sets.map((set, setIndex) => (
               <SetRow
                 key={set.id}
