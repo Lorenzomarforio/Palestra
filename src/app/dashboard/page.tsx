@@ -37,24 +37,31 @@ export default function Dashboard() {
 
   const filteredWorkouts = useMemo(() => {
     const now = new Date();
-    let cutoff = new Date();
-    
+    const cutoff = new Date(now);
+    cutoff.setHours(0, 0, 0, 0);
+
     switch (timeRange) {
-      case 'week':
-        cutoff.setDate(now.getDate() - 7);
+      case 'week': {
+        const dayOfWeek = cutoff.getDay();
+        const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        cutoff.setDate(cutoff.getDate() - daysFromMonday);
         break;
+      }
       case 'month':
-        cutoff.setMonth(now.getMonth() - 1);
+        cutoff.setDate(1);
         break;
       case 'quarter':
-        cutoff.setMonth(now.getMonth() - 3);
+        cutoff.setMonth(Math.floor(cutoff.getMonth() / 3) * 3, 1);
         break;
       case 'year':
-        cutoff.setFullYear(now.getFullYear() - 1);
+        cutoff.setMonth(0, 1);
         break;
     }
-    
-    return workouts.filter((w) => new Date(w.date) >= cutoff);
+
+    return workouts.filter((workout) => {
+      const workoutDate = new Date(`${workout.date.slice(0, 10)}T00:00:00`);
+      return workoutDate >= cutoff && workoutDate <= now;
+    });
   }, [workouts, timeRange]);
 
   const stats = useMemo(() => aggregateWorkoutStats(filteredWorkouts), [filteredWorkouts]);
@@ -107,14 +114,19 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex-row gap-2">
-          {(['week', 'month', 'quarter', 'year'] as const).map((range) => (
+          {([
+            ['week', 'Settimana'],
+            ['month', 'Mese'],
+            ['quarter', 'Trimestre'],
+            ['year', 'Anno'],
+          ] as const).map(([range, label]) => (
             <Button
               key={range}
               variant={timeRange === range ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setTimeRange(range)}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+              {label}
             </Button>
           ))}
         </div>
