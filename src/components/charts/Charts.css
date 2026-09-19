@@ -51,6 +51,17 @@
   user-select: none;
 }
 
+@keyframes chartTooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Stat Card */
 .stat-card {
   background-color: var(--color-bg-elevated);

@@ -1,4 +1,6 @@
-import { ReactNode } from 'react';
+'use client';
+
+import { ReactNode, useState } from 'react';
 import './Charts.css';
 
 interface ChartProps {
@@ -392,131 +394,366 @@ interface DonutChartProps extends ChartProps {
   centerLabel?: string;
   centerValue?: string;
   strokeWidth?: number;
+  formatValue?: (val: number) => string;
 }
 
 export function DonutChart({
   data,
-  width = 200,
-  height = 200,
+  width,
+  height = 240,
   centerLabel,
   centerValue,
-  strokeWidth = 20,
+  strokeWidth = 24,
+  formatValue,
   className = '',
 }: DonutChartProps) {
+  const [selectedItem, setSelectedItem] = useState<{
+    label: string;
+    value: number;
+    color: string;
+    percentage: number;
+    tooltipX: number;
+    tooltipY: number;
+  } | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<typeof selectedItem>(null);
+
+  const activeItem = selectedItem || hoveredItem;
   const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  const size = height || width || 240;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = Math.max(30, size / 2 - strokeWidth - 18);
+  const circumference = 2 * Math.PI * radius;
 
   if (total === 0) {
     return (
-      <div className={`chart chart--empty ${className}`} style={{ width, height }} role="img" aria-label="No data available">
-        <div className="chart__empty-state">No data</div>
+      <div
+        className={`chart chart--empty ${className}`}
+        style={{ width: '100%', height: size }}
+        role="img"
+        aria-label="Nessun dato disponibile"
+      >
+        <div className="chart__empty-state">Nessun dato</div>
       </div>
     );
   }
 
-  const radius = Math.min(width, height) / 2 - strokeWidth;
-  const circumference = 2 * Math.PI * radius;
+  const format = (val: number) => (formatValue ? formatValue(val) : `${val.toLocaleString()} kg`);
 
   let currentOffset = 0;
-
-  const segments = data.map((d) => {
-    const percentage = d.value / total;
+  const segmentInfos = data.map((d) => {
+    const percentage = total > 0 ? d.value / total : 0;
     const segmentLength = circumference * percentage;
-    const dashOffset = -currentOffset;
+    const dashOffset = currentOffset;
+    const midOffset = currentOffset + segmentLength / 2;
     currentOffset += segmentLength;
 
-    const startAngle = (currentOffset - segmentLength) / radius - Math.PI / 2;
-    const endAngle = currentOffset / radius - Math.PI / 2;
+    const midAngle = (midOffset / circumference) * 2 * Math.PI - Math.PI / 2;
+    const tooltipDistance = radius + strokeWidth / 2 + 14;
+    const tooltipX = cx + tooltipDistance * Math.cos(midAngle);
+    const tooltipY = cy + tooltipDistance * Math.sin(midAngle);
 
-    const largeArc = percentage > 0.5 ? 1 : 0;
-
-    const startX = width / 2 + radius * Math.cos(startAngle);
-    const startY = height / 2 + radius * Math.sin(startAngle);
-    const endX = width / 2 + radius * Math.cos(endAngle);
-    const endY = height / 2 + radius * Math.sin(endAngle);
-
-    return (
-      <path
-        key={d.label}
-        d={`M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY}`}
-        stroke={d.color}
-        strokeWidth={strokeWidth}
-        fill="none"
-        strokeLinecap="round"
-        className="chart__donut-segment"
-      />
-    );
+    return {
+      ...d,
+      percentage,
+      segmentLength,
+      dashOffset,
+      midAngle,
+      tooltipX,
+      tooltipY,
+    };
   });
 
+  const handleToggle = (item: (typeof segmentInfos)[number]) => {
+    if (selectedItem?.label === item.label) {
+      setSelectedItem(null);
+    } else {
+      setSelectedItem(item);
+    }
+  };
+
+  const clampedX = activeItem ? Math.max(45, Math.min(size - 45, activeItem.tooltipX)) : cx;
+  const clampedY = activeItem ? Math.max(22, Math.min(size - 22, activeItem.tooltipY)) : cy;
+
   return (
-    <div className={`chart chart--donut ${className}`} style={{ width, height }} role="img" aria-label="Donut chart">
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-        {/* Background circle */}
-        <circle
-          cx={width / 2}
-          cy={height / 2}
-          r={radius}
-          stroke="var(--color-border-primary)"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-
-        {/* Segments */}
-        <g>{segments}</g>
-
-        {/* Center text */}
-        {(centerLabel || centerValue) && (
-          <g className="chart__donut-center">
-            {centerValue && (
-              <text
-                x={width / 2}
-                y={height / 2 - (centerLabel ? 8 : 0)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="28"
-                fontWeight="700"
-                fill="var(--color-text-primary)"
-                fontFamily="var(--font-sans)"
-              >
-                {centerValue}
-              </text>
-            )}
-            {centerLabel && (
-              <text
-                x={width / 2}
-                y={height / 2 + (centerValue ? 16 : 4)}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="12"
-                fill="var(--color-text-tertiary)"
-                fontFamily="var(--font-sans)"
-              >
-                {centerLabel}
-              </text>
-            )}
-          </g>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+      }}
+    >
+      <div
+        className={`chart chart--donut ${className}`}
+        style={{
+          position: 'relative',
+          width: `${size}px`,
+          height: `${size}px`,
+          maxWidth: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        role="img"
+        aria-label="Grafico a torta distribuzione gruppi muscolari"
+      >
+        {/* Floating tooltip indicating muscle group */}
+        {activeItem && (
+          <div
+            className="chart__donut-tooltip"
+            style={{
+              position: 'absolute',
+              top: `${clampedY}px`,
+              left: `${clampedX}px`,
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: 'var(--color-bg-elevated)',
+              color: 'var(--color-text-primary)',
+              border: `1.5px solid ${activeItem.color}`,
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.45)',
+              borderRadius: '9999px',
+              padding: '4px 10px',
+              fontSize: '12px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              pointerEvents: 'none',
+              zIndex: 10,
+              whiteSpace: 'nowrap',
+              animation: 'chartTooltipFadeIn 0.15s ease-out',
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: activeItem.color,
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
+            <span>{activeItem.label}</span>
+            <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 400, fontSize: '11px' }}>
+              {Math.round(activeItem.percentage * 100)}%
+            </span>
+          </div>
         )}
 
-        {/* Legend */}
-        <g className="chart__donut-legend">
-          {data.map((d, i) => (
-            <g
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          style={{ overflow: 'visible', maxWidth: '100%', height: 'auto' }}
+        >
+          {/* Background circle */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={radius}
+            stroke="var(--color-border-primary)"
+            strokeWidth={strokeWidth}
+            fill="none"
+            opacity={0.35}
+          />
+
+          {/* Segments */}
+          <g>
+            {segmentInfos.map((d) => {
+              const isSelected = selectedItem?.label === d.label;
+              const isHovered = hoveredItem?.label === d.label;
+              const isActive = isSelected || isHovered;
+              const isAnyActive = activeItem !== null;
+
+              return (
+                <g key={d.label}>
+                  {/* Visible arc */}
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    stroke={d.color}
+                    strokeWidth={isActive ? strokeWidth + 5 : strokeWidth}
+                    fill="none"
+                    strokeDasharray={
+                      data.length > 1
+                        ? `${Math.max(1, d.segmentLength - 3)} ${circumference - Math.max(1, d.segmentLength - 3)}`
+                        : `${d.segmentLength} 0`
+                    }
+                    strokeDashoffset={-d.dashOffset}
+                    transform={`rotate(-90 ${cx} ${cy})`}
+                    className="chart__donut-segment"
+                    style={{
+                      cursor: 'pointer',
+                      transition: 'stroke-width 0.2s ease, opacity 0.2s ease',
+                      opacity: isAnyActive && !isActive ? 0.35 : 1,
+                    }}
+                  />
+                  {/* Wider transparent hit target for easy clicking and tapping */}
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    stroke="transparent"
+                    strokeWidth={strokeWidth + 20}
+                    fill="none"
+                    strokeDasharray={
+                      data.length > 1
+                        ? `${Math.max(1, d.segmentLength - 3)} ${circumference - Math.max(1, d.segmentLength - 3)}`
+                        : `${d.segmentLength} 0`
+                    }
+                    strokeDashoffset={-d.dashOffset}
+                    transform={`rotate(-90 ${cx} ${cy})`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggle(d);
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleToggle(d);
+                    }}
+                    onMouseEnter={() => setHoveredItem(d)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  />
+                </g>
+              );
+            })}
+          </g>
+
+          {/* Center text */}
+          <g
+            className="chart__donut-center"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setSelectedItem(null)}
+          >
+            {activeItem ? (
+              <>
+                <text
+                  x={cx}
+                  y={cy - 12}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="18"
+                  fontWeight="700"
+                  fill={activeItem.color}
+                  fontFamily="var(--font-sans)"
+                >
+                  {activeItem.label}
+                </text>
+                <text
+                  x={cx}
+                  y={cy + 10}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="14"
+                  fontWeight="600"
+                  fill="var(--color-text-primary)"
+                  fontFamily="var(--font-sans)"
+                >
+                  {format(activeItem.value)}
+                </text>
+                <text
+                  x={cx}
+                  y={cy + 28}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="11"
+                  fill="var(--color-text-tertiary)"
+                  fontFamily="var(--font-sans)"
+                >
+                  {Math.round(activeItem.percentage * 100)}% del totale
+                </text>
+              </>
+            ) : (
+              <>
+                {centerValue && (
+                  <text
+                    x={cx}
+                    y={cy - (centerLabel ? 8 : 0)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="24"
+                    fontWeight="700"
+                    fill="var(--color-text-primary)"
+                    fontFamily="var(--font-sans)"
+                  >
+                    {centerValue}
+                  </text>
+                )}
+                {centerLabel && (
+                  <text
+                    x={cx}
+                    y={cy + (centerValue ? 18 : 4)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="12"
+                    fill="var(--color-text-tertiary)"
+                    fontFamily="var(--font-sans)"
+                  >
+                    {centerLabel}
+                  </text>
+                )}
+              </>
+            )}
+          </g>
+        </svg>
+      </div>
+
+      {/* Interactive Legend Pills */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 'var(--space-2)',
+          marginTop: 'var(--space-4)',
+          width: '100%',
+        }}
+      >
+        {segmentInfos.map((d) => {
+          const isSelected = activeItem?.label === d.label;
+          return (
+            <button
               key={d.label}
-              transform={`translate(${width / 2}, ${height + 30 + i * 20})`}
+              type="button"
+              onClick={() => handleToggle(d)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                borderRadius: '9999px',
+                border: isSelected ? `1.5px solid ${d.color}` : '1px solid var(--color-border-primary)',
+                backgroundColor: isSelected ? 'var(--color-bg-primary)' : 'var(--color-bg-elevated)',
+                color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                fontSize: '12px',
+                fontWeight: isSelected ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: isSelected ? `0 0 10px ${d.color}40` : 'none',
+              }}
             >
-              <circle cx={-60} cy={0} r={6} fill={d.color} />
-              <text
-                x={-48}
-                y={4}
-                fontSize="11"
-                fill="var(--color-text-secondary)"
-                fontFamily="var(--font-sans)"
-              >
-                {d.label}: {d.value}
-              </text>
-            </g>
-          ))}
-        </g>
-      </svg>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  backgroundColor: d.color,
+                  display: 'inline-block',
+                  flexShrink: 0,
+                }}
+              />
+              <span>{d.label}</span>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: '11px' }}>
+                {Math.round(d.percentage * 100)}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

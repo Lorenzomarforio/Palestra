@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="it" suppressHydrationWarning>
+    <html lang="it" suppressHydrationWarning data-scroll-behavior="smooth">
       <body>
         <a href="#main-content" className="skip-link">
           Vai al contenuto principale

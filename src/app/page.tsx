@@ -65,6 +65,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [newWorkoutName, setNewWorkoutName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [editDateId, setEditDateId] = useState<string | null>(null);
@@ -112,8 +113,9 @@ export default function Home() {
 
   const createWorkout = async (name?: string, templateExerciseIds?: string[]) => {
     const workoutName = name || newWorkoutName.trim();
-    if (!workoutName) return;
+    if (!workoutName || isCreating) return;
 
+    setIsCreating(true);
     try {
       const workout: Workout = {
         id: generateId(),
@@ -140,6 +142,8 @@ export default function Home() {
     } catch (error) {
       console.error('Create workout error:', error);
       showError('Impossibile creare l\'allenamento.');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -432,9 +436,9 @@ export default function Home() {
             autoFocus
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Annulla</Button>
-            <Button onClick={() => createWorkout()} disabled={!newWorkoutName.trim()}>
-              Crea
+            <Button variant="secondary" onClick={() => setShowModal(false)} disabled={isCreating}>Annulla</Button>
+            <Button onClick={() => createWorkout()} disabled={!newWorkoutName.trim() || isCreating}>
+              {isCreating ? 'Creazione...' : 'Crea'}
             </Button>
           </div>
         </div>
@@ -453,8 +457,8 @@ export default function Home() {
               key={template.id}
               variant="outlined"
               padding="md"
-              onClick={() => createFromTemplate(template)}
-              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}
+              onClick={() => !isCreating && createFromTemplate(template)}
+              style={{ cursor: isCreating ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--space-4)', opacity: isCreating ? 0.7 : 1 }}
             >
               <div style={{ 
                 display: 'flex', 

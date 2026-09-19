@@ -185,6 +185,7 @@ export default function Dashboard() {
                 centerLabel="Volume"
                 centerValue={formatVolume(stats.totalVolume)}
                 strokeWidth={24}
+                formatValue={formatVolume}
               />
             ) : (
               <div className="empty-state">

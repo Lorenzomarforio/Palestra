@@ -1,0 +1,5 @@
+# Project bun configuration
+# Overrides global ~/.bunfig.toml for this project
+
+[install]
+frozenLockfile = false
